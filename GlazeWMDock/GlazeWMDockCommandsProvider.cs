@@ -70,6 +70,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
 
         _client.WorkspacesChanged += OnWorkspacesChanged;
         _client.Start();
+        Log.Line("provider constructed; GlazeWM client started");
     }
 
     public override ICommandItem[] TopLevelCommands() => _topLevel;
@@ -89,9 +90,10 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
         {
             _page.SetSnapshot(workspaces);
         }
-        catch
+        catch (Exception ex)
         {
             // Stale/dead host proxy; ignore and keep pumping events.
+            Log.Line($"page update failed: {ex.GetType().Name} 0x{ex.HResult:X8} {ex.Message}");
         }
 
         // Updating the strip assigns Title/Subtitle, which raises PropChanged
@@ -105,8 +107,9 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
         {
             _strip.Update(workspaces);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Line($"strip update failed (host proxy likely dead): {ex.GetType().Name} 0x{ex.HResult:X8} {ex.Message} — rebuilding dock band");
             RebuildDockBand();
         }
     }
@@ -129,10 +132,12 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
             _strip = strip;
             _dockBand = new WrappedDockItem([strip], DockBandId, "GlazeWM Workspace Strip");
             RaiseItemsChanged(_topLevel.Length);
+            Log.Line("dock band rebuilt; RaiseItemsChanged sent so host re-binds");
         }
-        catch
+        catch (Exception ex)
         {
             // Host still unreachable; leave state as-is and let the next event retry.
+            Log.Line($"dock band rebuild failed: {ex.GetType().Name} 0x{ex.HResult:X8} {ex.Message}");
         }
     }
 

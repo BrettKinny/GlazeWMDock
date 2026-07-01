@@ -64,19 +64,22 @@ internal sealed partial class GlazeWmClient : IDisposable
                 using var socket = new ClientWebSocket();
                 _socket = socket;
                 await socket.ConnectAsync(_uri, token).ConfigureAwait(false);
+                Log.Line($"IPC connected to {_uri}");
 
                 await SendAsync(SubscribeWorkspaceEvents).ConfigureAwait(false);
                 await SendAsync(QueryWorkspaces).ConfigureAwait(false);
 
                 await ReceiveLoopAsync(socket, token).ConfigureAwait(false);
+                Log.Line("IPC receive loop ended (socket closed); will reconnect");
             }
             catch (OperationCanceledException)
             {
                 break;
             }
-            catch
+            catch (Exception ex)
             {
                 // Connection failed or dropped; fall through to the retry delay.
+                Log.Line($"IPC connect/receive failed: {ex.GetType().Name}: {ex.Message}");
             }
             finally
             {

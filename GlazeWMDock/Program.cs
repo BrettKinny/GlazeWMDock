@@ -25,9 +25,11 @@ public class Program
             GlazeWMDockExtension extensionInstance = new(extensionDisposedEvent);
             server.RegisterClass<GlazeWMDockExtension, IExtension>(() => extensionInstance);
             server.Start();
+            Log.Line("COM server started; waiting for host activation");
 
             // Block until the extension is disposed by the host.
             extensionDisposedEvent.WaitOne();
+            Log.Line("extension disposed by host; stopping COM server");
             server.Stop();
             server.UnsafeDispose();
         }

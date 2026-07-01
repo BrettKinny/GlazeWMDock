@@ -173,6 +173,13 @@ The strip re-composes on every workspace change either way.
 
 ---
 
+## Publishing to the Microsoft Store
+
+The current flow is **sideloading** (self-signed, `Add-AppxPackage`). To ship it
+via the Store instead — which drops self-signing and makes it one-click from
+Command Palette's gallery / `winget` — see
+[`docs/publishing-to-store.md`](docs/publishing-to-store.md).
+
 ## Caveats / known limitations
 
 - **No true "active" highlight.** The Dock renders the strip as a single text

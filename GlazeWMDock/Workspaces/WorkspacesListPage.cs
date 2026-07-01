@@ -40,7 +40,13 @@ internal sealed partial class WorkspacesListPage : ListPage
         {
             items.Add(new ListItem(new FocusWorkspaceCommand(_client, ws.Name))
             {
-                Title = string.IsNullOrEmpty(ws.DisplayName) ? ws.Name : ws.DisplayName,
+                // DisplayName is always populated (the parser falls back to the
+                // workspace name), so key off it: a purely numeric label is just
+                // the workspace number -> "Workspace N"; a real custom name is
+                // shown as-is (and isn't echoed by the circled-digit icon anyway).
+                Title = int.TryParse(ws.DisplayName, out _)
+                    ? $"Workspace {ws.DisplayName}"
+                    : ws.DisplayName,
                 Subtitle = ws.HasFocus
                     ? "focused"
                     : ws.WindowCount == 1 ? "1 window" : $"{ws.WindowCount} windows",

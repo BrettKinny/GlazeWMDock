@@ -31,11 +31,13 @@ State comes from GlazeWM's IPC WebSocket (`ws://127.0.0.1:6123`): the extension
 subscribes to workspace/focus events and re-queries `query workspaces` on each
 change.
 
-> **Status:** built, signed, and **installed** — now at **v0.0.1.1**
-> (2026-07-01), which switches the Dock band to a **live-text workspace strip**
-> (see "Dock band" above). After installing, run **Reload** in Command Palette,
-> then enable the band under Settings → Bands. Your existing GlazeWM / Zebar
-> config has **not** been touched — keep Zebar running until you're happy.
+> **Status:** built, signed, and **installed** — now at **v0.0.1.7**
+> (2026-07-01). The Dock band is a **live-text workspace strip** (see "Dock band"
+> above), and the top-level switcher page now labels rows **"Workspace N"**
+> instead of a bare digit, so the number isn't echoed by the circled-digit icon.
+> After installing, run **Reload** in Command Palette, then enable the band under
+> Settings → Bands. Your existing GlazeWM / Zebar config has **not** been touched
+> — keep Zebar running until you're happy.
 
 ## Turn it on (in Command Palette)
 
@@ -97,7 +99,13 @@ Then run **Reload** in Command Palette to re-instantiate the extension.
 
 - Windows 11 with **PowerToys** installed and **Command Palette** enabled
   (you're on CmdPal 0.11 / PowerToys 0.100 — good; Dock needs ≥ 0.9 / 0.98).
-- **Developer Mode** enabled (Settings → System → For developers).
+- **Developer Mode** — *not* required for this machine's deploy loop, and
+  currently **off** here. With it off, unsigned dev-registration
+  (`Add-AppxPackage -Register` on the loose build output) fails with
+  `0x80073CFF`, so the working loop is the **signed-MSIX** one below (build →
+  `signtool` → `Add-AppxPackage`), which succeeds because the `GlazeWMDock Dev`
+  cert is trusted. Enable Developer Mode (Settings → System → For developers) if
+  you want the faster register-in-place loop instead.
 - **.NET 10 SDK** — already installed on this machine (`10.0.300`). The project
   targets `net10.0-windows10.0.26100.0`, matching the SDK version your CmdPal
   0.11 install was built against. `dotnet restore` already succeeds.

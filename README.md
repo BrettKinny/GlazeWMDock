@@ -3,7 +3,7 @@
 A PowerToys **Command Palette** extension that puts your **GlazeWM workspace
 numbers on the Command Palette Dock** — the persistent toolbar that reserves
 screen space via the Windows AppBar API. The goal: replace Zebar's workspace
-strip so you can (eventually) drop Zebar.
+strip so you can drop Zebar if you so wish.
 
 It does two things:
 
@@ -30,14 +30,6 @@ It does two things:
 State comes from GlazeWM's IPC WebSocket (`ws://127.0.0.1:6123`): the extension
 subscribes to workspace/focus events and re-queries `query workspaces` on each
 change.
-
-> **Status:** built, signed, and **installed** — now at **v0.0.1.7**
-> (2026-07-01). The Dock band is a **live-text workspace strip** (see "Dock band"
-> above), and the top-level switcher page now labels rows **"Workspace N"**
-> instead of a bare digit, so the number isn't echoed by the circled-digit icon.
-> After installing, run **Reload** in Command Palette, then enable the band under
-> Settings → Bands. Your existing GlazeWM / Zebar config has **not** been touched
-> — keep Zebar running until you're happy.
 
 ## Turn it on (in Command Palette)
 

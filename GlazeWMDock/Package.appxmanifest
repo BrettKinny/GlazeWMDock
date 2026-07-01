@@ -11,7 +11,7 @@
   <Identity
     Name="GlazeWMDock"
     Publisher="CN=GlazeWMDock Dev"
-    Version="0.0.1.7" />
+    Version="0.0.1.8" />
   <!-- For local sideloading/deploy, Visual Studio generates a self-signed test
        certificate that matches this Publisher and prompts you to trust it.
        When publishing, change Publisher to match your real signing identity. -->

@@ -1,4 +1,3 @@
-// Copyright (c) Brett Kinny.
 // The IExtension implementation. The [Guid] MUST match the CLSID used in
 // Package.appxmanifest (com:Class Id and CreateInstance ClassId).
 using System;

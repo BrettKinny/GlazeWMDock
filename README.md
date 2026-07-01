@@ -176,9 +176,10 @@ The strip re-composes on every workspace change either way.
 ## Publishing to the Microsoft Store
 
 The current flow is **sideloading** (self-signed, `Add-AppxPackage`). To ship it
-via the Store instead — which drops self-signing and makes it one-click from
-Command Palette's gallery / `winget` — see
-[`docs/publishing-to-store.md`](docs/publishing-to-store.md).
+more widely there are two channels: the **Microsoft Store** (needs a Partner
+Center account; drops self-signing and lists in Command Palette's gallery) or
+**WinGet** (no account needed; discoverable via CmdPal's `Search WinGet`). Both
+are covered in [`docs/publishing-to-store.md`](docs/publishing-to-store.md).
 
 ## Caveats / known limitations
 

@@ -12,10 +12,34 @@ Partner Center assigns you. Everything else is packaging mechanics.
 
 ---
 
+## Two ways to publish (you don't strictly need the Store)
+
+Command Palette extensions have two distribution channels, and only one needs a
+Partner Center account:
+
+| Channel | Partner Center? | Auto-updates | How users find it |
+| --- | --- | --- | --- |
+| **Microsoft Store** | required | yes | CmdPal gallery / `winget` |
+| **WinGet** | **not needed** | yes | CmdPal's `Search WinGet` (tag `windows-commandpalette-extension`) |
+
+The **WinGet** path publishes from a GitHub release (GitHub Actions builds an
+installer, `wingetcreate` submits the manifest to the community `winget-pkgs`
+repo) — no account, no fee, no Store certification queue — and the extension
+still appears inside Command Palette and still auto-updates. Either way you can
+also list in the curated **Extension Gallery** (a PR to
+[`microsoft/CmdPal-Extensions`](https://github.com/microsoft/CmdPal-Extensions)),
+which just links to whichever source you chose.
+
+The rest of this doc covers the **Store** path.
+
+---
+
 ## Prerequisites (one-time)
 
-- A **Partner Center** account enrolled as a Windows/Store developer
-  (~$19 one-time for an individual). Skip if you already have one.
+- A **Partner Center** account enrolled as a Windows/Store developer.
+  Individual registration is now **free** (the old ~$19 fee is waived in
+  Microsoft's current onboarding flow), but it now requires **ID verification**
+  (government-issued ID + a selfie). Skip if you already have one.
 - The project already builds both architectures (`RuntimeIdentifiers` is
   `win-x64;win-arm64` in `GlazeWMDock.csproj`), so a Store package can include
   both — no project change needed for that.
@@ -25,8 +49,17 @@ Partner Center assigns you. Everything else is packaging mechanics.
 ## Steps
 
 ### 1. Enroll in Partner Center
-Enroll as a Windows/Store developer if you haven't already. Individual accounts
-are fine and **can** ship full-trust (Win32/desktop) packaged apps like this one.
+Go to <https://storedeveloper.microsoft.com> → **Get started for free** → choose
+**Individual developer** (free), then sign in and complete ID verification
+(government ID + selfie). Individual accounts are fine and **can** ship
+full-trust (Win32/desktop) packaged apps like this one.
+
+- **Use a personal Microsoft account** (Outlook/Live). Individual accounts
+  require a personal MSA — a work/Entra account (e.g. an `@company.com` address)
+  is **Company-only**.
+- The account type (**Individual** vs **Company**) is **irreversible**. Pick
+  Individual unless the extension is published under a business's name (Company
+  is ~$99 and needs business verification via DUNS or documents).
 
 ### 2. Reserve the app name
 Partner Center → **Apps and games → New product → MSIX/PWA app** → reserve a

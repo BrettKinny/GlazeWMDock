@@ -1,0 +1,20 @@
+## .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+AppPackages/
+BundleArtifacts/
+*.appx
+*.msix
+*.appxbundle
+*.cer
+*.pfx
+_ReSharper*/
+*.DotSettings.user
+
+# NOTE: Unlike the stock C# .gitignore, do NOT ignore these — the Windows App
+# SDK needs them to deploy the package on a fresh clone:
+#   !**/Properties/launchSettings.json
+#   !*.pubxml

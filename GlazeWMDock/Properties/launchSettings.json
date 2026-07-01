@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "GlazeWMDock (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "GlazeWMDock (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

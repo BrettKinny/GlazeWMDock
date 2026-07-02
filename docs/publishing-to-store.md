@@ -1,5 +1,9 @@
 # Publishing GlazeWMDock to the Microsoft Store
 
+> **Picking this up later?** See [`release-checklist.md`](release-checklist.md)
+> for the current status (what's done vs. what's left). This doc is the detailed
+> how-to for the Store path.
+
 Notes for a later session. Today the extension is **sideloaded**: self-signed
 with the `GlazeWMDock Dev` cert and installed with `Add-AppxPackage` (see the
 main [README](../README.md)). Publishing to the Store replaces that

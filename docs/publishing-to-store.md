@@ -81,7 +81,7 @@ Replace the current **dev** identity:
 <Identity
   Name="GlazeWMDock"
   Publisher="CN=GlazeWMDock Dev"
-  Version="0.0.1.5" />
+  Version="1.0.0.0" />
 ...
 <PublisherDisplayName>Brett Kinny</PublisherDisplayName>
 ```
@@ -104,8 +104,11 @@ Leave these **unchanged** — they are not tied to the Store identity:
 - The `com.microsoft.commandpalette` app-extension registration (see step 5).
 
 Bump `Version` per submission (the Store requires a higher `Version` than the
-previously published one; the revision field, e.g. `.5`, is fine to keep
-climbing).
+previously published one). **Important:** the Store reserves the **4th (revision)
+field — it must be `0`** in the package you build (e.g. `1.0.0.0`, `1.0.1.0`).
+Do **not** increment the 4th field for Store submissions; bump the **3rd**
+field instead. (The sideloaded dev builds happened to climb the 4th field, e.g.
+`0.0.1.9` — that layout is invalid for the Store.)
 
 ### 4. Build the Store package
 In Visual Studio: right-click the project → **Publish → Create App Packages… →

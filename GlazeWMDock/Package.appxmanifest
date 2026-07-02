@@ -11,10 +11,13 @@
   <Identity
     Name="GlazeWMDock"
     Publisher="CN=GlazeWMDock Dev"
-    Version="0.0.1.9" />
+    Version="1.0.0.0" />
   <!-- For local sideloading/deploy, Visual Studio generates a self-signed test
        certificate that matches this Publisher and prompts you to trust it.
-       When publishing, change Publisher to match your real signing identity. -->
+       When publishing, change Name/Publisher to the values Partner Center assigns
+       (Product management -> Product identity); the Store re-signs the package.
+       Version: the Store reserves the 4th field (must stay 0); bump the 3rd field
+       for each submission (1.0.1.0, 1.0.2.0, ...). -->
 
   <Properties>
     <DisplayName>GlazeWM Workspaces</DisplayName>

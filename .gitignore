@@ -9,10 +9,20 @@ BundleArtifacts/
 *.appx
 *.msix
 *.appxbundle
+*.msixbundle
+*.msixupload
 *.cer
 *.pfx
 _ReSharper*/
 *.DotSettings.user
+
+## Secrets / signing material (insurance — none are tracked today)
+*.snk
+*.pem
+*.p12
+*.key
+.env
+.env.*
 
 # NOTE: Unlike the stock C# .gitignore, do NOT ignore these — the Windows App
 # SDK needs them to deploy the package on a fresh clone:

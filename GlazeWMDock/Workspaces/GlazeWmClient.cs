@@ -12,9 +12,14 @@ namespace GlazeWMDock.Workspaces;
 /// Minimal client for GlazeWM's IPC WebSocket server (ws://localhost:6123).
 ///
 /// On connect it subscribes to the workspace/focus events and pulls the
-/// initial workspace list. Any subscribed event triggers a re-query of the
-/// authoritative "query workspaces" list, which is then surfaced via
-/// <see cref="WorkspacesChanged"/>. The connection auto-reconnects.
+/// initial monitor list. Any subscribed event triggers a re-query of the
+/// authoritative "query monitors" tree — which groups workspaces under their
+/// owning monitor and carries each monitor's position and focus — surfaced via
+/// <see cref="MonitorsChanged"/>. The connection auto-reconnects.
+///
+/// (We query monitors rather than "query workspaces" because the strip needs to
+/// render each monitor's workspaces separately; the flat workspace list has no
+/// monitor grouping, position, or per-monitor focus.)
 ///
 /// JSON is read with <see cref="JsonDocument"/> (no reflection), which keeps
 /// the extension trim/AOT-safe — the project trims on Release.
@@ -22,7 +27,7 @@ namespace GlazeWMDock.Workspaces;
 internal sealed partial class GlazeWmClient : IDisposable
 {
     private const int DefaultPort = 6123;
-    private const string QueryWorkspaces = "query workspaces";
+    private const string QueryMonitors = "query monitors";
     private const string SubscribeWorkspaceEvents =
         "sub --events focus_changed workspace_activated workspace_deactivated workspace_updated";
 
@@ -31,8 +36,8 @@ internal sealed partial class GlazeWmClient : IDisposable
     private readonly CancellationTokenSource _cts = new();
     private ClientWebSocket? _socket;
 
-    /// <summary>Raised whenever a fresh workspace list arrives.</summary>
-    public event Action<IReadOnlyList<WorkspaceInfo>>? WorkspacesChanged;
+    /// <summary>Raised whenever a fresh monitor/workspace snapshot arrives.</summary>
+    public event Action<IReadOnlyList<MonitorInfo>>? MonitorsChanged;
 
     public GlazeWmClient(int port = DefaultPort)
     {
@@ -67,7 +72,7 @@ internal sealed partial class GlazeWmClient : IDisposable
                 Log.Line($"IPC connected to {_uri}");
 
                 await SendAsync(SubscribeWorkspaceEvents).ConfigureAwait(false);
-                await SendAsync(QueryWorkspaces).ConfigureAwait(false);
+                await SendAsync(QueryMonitors).ConfigureAwait(false);
 
                 await ReceiveLoopAsync(socket, token).ConfigureAwait(false);
                 Log.Line("IPC receive loop ended (socket closed); will reconnect");
@@ -143,34 +148,57 @@ internal sealed partial class GlazeWmClient : IDisposable
 
             if (messageType == "event_subscription")
             {
-                // Something changed; ask for the authoritative workspace list.
-                await SendAsync(QueryWorkspaces).ConfigureAwait(false);
+                // Something changed; ask for the authoritative monitor tree.
+                await SendAsync(QueryMonitors).ConfigureAwait(false);
                 return;
             }
 
             if (messageType == "client_response"
                 && root.TryGetProperty("clientMessage", out var cm)
-                && cm.GetString() == QueryWorkspaces
+                && cm.GetString() == QueryMonitors
                 && root.TryGetProperty("success", out var ok)
                 && ok.ValueKind == JsonValueKind.True
                 && root.TryGetProperty("data", out var data)
                 && data.ValueKind == JsonValueKind.Object
-                && data.TryGetProperty("workspaces", out var wsArray)
-                && wsArray.ValueKind == JsonValueKind.Array)
+                && data.TryGetProperty("monitors", out var monArray)
+                && monArray.ValueKind == JsonValueKind.Array)
             {
-                var list = new List<WorkspaceInfo>(wsArray.GetArrayLength());
-                foreach (var ws in wsArray.EnumerateArray())
+                var list = new List<MonitorInfo>(monArray.GetArrayLength());
+                foreach (var mon in monArray.EnumerateArray())
                 {
-                    list.Add(ParseWorkspace(ws));
+                    list.Add(ParseMonitor(mon));
                 }
 
-                WorkspacesChanged?.Invoke(list);
+                MonitorsChanged?.Invoke(list);
             }
         }
         catch
         {
             // Ignore malformed or unexpected frames.
         }
+    }
+
+    private static MonitorInfo ParseMonitor(JsonElement mon)
+    {
+        var workspaces = new List<WorkspaceInfo>();
+        if (mon.TryGetProperty("children", out var children) && children.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var child in children.EnumerateArray())
+            {
+                if (string.Equals(GetString(child, "type"), "workspace", StringComparison.OrdinalIgnoreCase))
+                {
+                    workspaces.Add(ParseWorkspace(child));
+                }
+            }
+        }
+
+        return new MonitorInfo(
+            DeviceName: GetString(mon, "deviceName"),
+            DevicePath: GetString(mon, "devicePath"),
+            X: GetInt(mon, "x"),
+            Y: GetInt(mon, "y"),
+            HasFocus: GetBool(mon, "hasFocus"),
+            Workspaces: workspaces);
     }
 
     private static WorkspaceInfo ParseWorkspace(JsonElement ws)
@@ -211,6 +239,11 @@ internal sealed partial class GlazeWmClient : IDisposable
 
     private static bool GetBool(JsonElement el, string prop) =>
         el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.True;
+
+    private static int GetInt(JsonElement el, string prop) =>
+        el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n)
+            ? n
+            : 0;
 
     private async Task SendAsync(string message)
     {

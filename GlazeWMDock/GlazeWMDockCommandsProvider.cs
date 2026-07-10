@@ -32,13 +32,13 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
     private readonly ICommandItem[] _topLevel;
 
     // The strip/band are rebuilt if the Dock's live-update channel breaks (see
-    // OnWorkspacesChanged), so they aren't readonly. _dockBand is read on a host
+    // OnMonitorsChanged), so they aren't readonly. _dockBand is read on a host
     // COM thread (GetDockBands) and reassigned on the WebSocket receive thread,
     // hence volatile. _latest caches the newest snapshot so a rebuilt strip can
     // be seeded with current state instead of the constructor placeholder.
     private volatile WorkspaceStripItem _strip;
     private volatile WrappedDockItem _dockBand;
-    private IReadOnlyList<WorkspaceInfo> _latest = [];
+    private IReadOnlyList<MonitorInfo> _latest = [];
 
     public GlazeWMDockCommandsProvider()
     {
@@ -68,7 +68,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
             },
         ];
 
-        _client.WorkspacesChanged += OnWorkspacesChanged;
+        _client.MonitorsChanged += OnMonitorsChanged;
         _client.Start();
         Log.Line("provider constructed; GlazeWM client started");
     }
@@ -77,9 +77,13 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
 
     public override ICommandItem[]? GetDockBands() => [_dockBand];
 
-    private void OnWorkspacesChanged(IReadOnlyList<WorkspaceInfo> workspaces)
+    private void OnMonitorsChanged(IReadOnlyList<MonitorInfo> monitors)
     {
-        _latest = workspaces;
+        _latest = monitors;
+
+        // The switcher page lists every workspace across all monitors, so flatten
+        // the per-monitor tree back into a single list for it.
+        var workspaces = monitors.SelectMany(m => m.Workspaces).ToList();
 
         // Update the palette page FIRST and guard it independently. The page
         // re-pulls GetItems() every time it's opened, so it self-heals even
@@ -105,7 +109,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
         // reload. Now we catch it and rebuild the band so the host can re-bind.
         try
         {
-            _strip.Update(workspaces);
+            _strip.Update(monitors);
         }
         catch (Exception ex)
         {
@@ -143,7 +147,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
 
     public override void Dispose()
     {
-        _client.WorkspacesChanged -= OnWorkspacesChanged;
+        _client.MonitorsChanged -= OnMonitorsChanged;
         _client.Dispose();
         base.Dispose();
         GC.SuppressFinalize(this);

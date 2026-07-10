@@ -153,8 +153,9 @@ Add-AppxPackage -Path <new .msix path> -ForceApplicationShutdown
   `Workspaces/WorkspaceStripItem.cs` (default `true`):
   - `true`: hides empty and undisplayed workspaces (Zebar-like). The strip shows
     only what's live: the focused workspace plus any holding windows.
-  - `false`: all ten digits are always in the strip; inactive ones show a plain
-    digit (an i3-style persistent strip).
+  - `false`: every configured workspace is in the strip; inactive ones (which the
+    IPC doesn't tie to any monitor) trail the per-monitor groups as plain digits
+    (an i3-style persistent strip).
 
   The strip re-composes on every workspace change either way.
 
@@ -177,6 +178,20 @@ is mutated in place, which is how the built-in clock band works. Dynamic info in
 child items' subtitles only shows inside the flyout popup, never on the bar. So
 the whole strip lives in one item's `Title`.
 
+Multi-monitor: the Dock renders the same band on every monitor. The SDK gives an
+extension no way to know which monitor a band is painting on (`GetDockBands()`
+takes no monitor context), so one strip is unavoidably shared across all docks.
+To keep that from looking like every monitor mirrors the same state, the strip
+groups workspaces by monitor (ordered left-to-right by physical position, from
+`query monitors`). Each monitor's currently displayed workspace is the bold
+filled circled digit; every other workspace is a plain digit. Which monitor has
+focus is shown by the brackets: every monitor except the one you're on is wrapped
+in `[brackets]`, so the un-bracketed group is where you are. So `❸ 5 [1 2 4 ❻]`
+reads "I'm on this monitor, showing workspace 3 (which also has 5); the other
+monitor is showing 6 (and also has 1, 2, 4)." Switching monitors just moves the
+brackets. On a single monitor there are no brackets and it looks the way it
+always did.
+
 ## Privacy
 
 The extension communicates only with a local GlazeWM instance over loopback
@@ -196,6 +211,11 @@ under the app's `LocalState` folder, rotated at 512 KB.
 - One click target. Because the strip is one label, clicking it opens the
   switcher page rather than focusing a specific workspace. Use GlazeWM's
   `Alt+1..0` keybinds to switch; the strip reflects state.
+- Every monitor's dock shows the same strip. The Dock API renders one band
+  identically on all monitors, so each dock can't show only its own monitor's
+  workspaces. The strip works around this by grouping per monitor and bracketing
+  the ones you're not on (see [How it works](#how-it-works)), but the text is the
+  same on every dock.
 - No auto-hide, no resize or drag. The Dock is always-on and positioned only via
   its setting (Windows AppBar behavior).
 - Configuration is compile-time only (see [Configuration](#configuration)).

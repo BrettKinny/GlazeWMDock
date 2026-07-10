@@ -1,5 +1,10 @@
 # Store listing content — GlazeWM Workspaces
 
+> **Release status:** Version `1.0.0.0` was submitted to Microsoft on
+> **2026-07-11** and is in certification. Partner Center Store ID:
+> `9NTLS4PBWN3X`. Publishing is configured to begin automatically after the
+> submission passes certification.
+
 Ready-to-paste copy for the Partner Center listing. Product: **GlazeWM
 Workspaces** · Store ID **9NTLS4PBWN3X** · PFN
 **BrettKinny.GlazeWMWorkspaces_qh71y33f4g84y**.

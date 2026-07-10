@@ -1,7 +1,8 @@
 # Release checklist (maintainer)
 
 Tracking the path to (1) making this repo public and (2) publishing to the
-Microsoft Store. Store mechanics in depth live in
+Microsoft Store. The initial `1.0.0.0` submission entered certification on
+**2026-07-11**. Store mechanics in depth live in
 [`publishing-to-store.md`](publishing-to-store.md); this file is the status
 tracker. Check items off as you go.
 
@@ -81,10 +82,21 @@ See [`publishing-to-store.md`](publishing-to-store.md) for step detail and
   package. Overall result: **Warning**. Required tests pass; the optional
   blocked-executable scan flags strings in the self-contained .NET runtime, and
   DPI detection warns despite `app.manifest` declaring `PerMonitorV2`.
-- [ ] Complete the listing in Partner Center by pasting from `store-listing.md`;
-  run the IARC age-rating questionnaire; set free pricing + all markets. Add a
-  privacy policy URL (Store requires one).
-- [ ] Submit for certification.
+- [x] Completed the Partner Center listing: English (Australia), three desktop
+  screenshots, Developer tools category, free pricing in all markets, and
+  publish automatically after certification. The IARC questionnaire produced
+  the lowest ratings (Microsoft/IARC 3+, ESRB Everyone). The privacy policy is
+  published at `PRIVACY.md`; the personal-information declaration is **No**
+  because the extension does not access, collect, store, or transmit identifying
+  data. The privacy-policy URL remains supplied because Win32/full-trust products
+  must provide one.
+- [x] Added the `runFullTrust` justification and reviewer setup instructions,
+  including the PowerToys Command Palette and GlazeWM prerequisites.
+- [x] Submitted version `1.0.0.0` for certification on 2026-07-11. Partner
+  Center accepted it and began pre-processing; it will publish automatically if
+  certification passes. Microsoft advises that certification normally takes a
+  few hours but can take up to three business days.
+- [ ] Confirm certification passes and the Store listing is publicly reachable.
 - [ ] After it's live: uninstall the sideloaded dev package to avoid duplicate
   providers, `Get-AppxPackage -Name GlazeWMDock | Remove-AppxPackage`.
 

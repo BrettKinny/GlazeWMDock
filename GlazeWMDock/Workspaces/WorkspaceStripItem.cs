@@ -27,15 +27,16 @@ namespace GlazeWMDock.Workspaces;
 /// single strip is inevitably shared across all docks. To keep that shared strip
 /// from looking like every monitor mirrors the same state, it shows each
 /// monitor's workspaces as its own group, ordered left-to-right by physical
-/// position: the <em>focused</em> monitor's group is rendered as glyphs (its
-/// focused workspace as the bold filled circled digit), and every other
-/// monitor's group is wrapped in <c>[brackets]</c> with that monitor's currently
-/// displayed workspace shown as the outline circled digit. So <c>❸ 5 [1 2 4 ⑥]</c>
-/// reads "this monitor is on workspace 3 (and has 5); the other monitor is
-/// showing 6 (and has 1, 2, 4)." On a single monitor there are no brackets and
-/// it looks the way it always did. The focused workspace is also named in the
-/// <c>Subtitle</c> (e.g. <c>Workspace 2</c>). Clicking the strip opens the
-/// workspace switcher page.
+/// position. Each monitor's currently displayed workspace is the bold filled
+/// circled digit; every other workspace is a plain digit. Which monitor has
+/// focus is shown by the brackets: every monitor <em>except</em> the one you're
+/// on is wrapped in <c>[brackets]</c>, so the un-bracketed group is where you
+/// are. So <c>❸ 5 [1 2 4 ❻]</c> reads "I'm on this monitor, showing workspace 3
+/// (which also has 5); the other monitor is showing 6 (and also has 1, 2, 4)."
+/// Switching monitors just moves the brackets. On a single monitor there are no
+/// brackets and it looks the way it always did. The focused workspace is also
+/// named in the <c>Subtitle</c> (e.g. <c>Workspace 2</c>). Clicking the strip
+/// opens the workspace switcher page.
 /// </summary>
 internal sealed partial class WorkspaceStripItem : ListItem
 {
@@ -92,28 +93,22 @@ internal sealed partial class WorkspaceStripItem : ListItem
                     segment.Append(' ');
                 }
 
-                if (monitor.HasFocus)
-                {
-                    // The monitor you're on: plain, legible digits, with the
-                    // focused workspace as the bold filled circled digit.
-                    segment.Append(ws.HasFocus
-                        ? WorkspaceGlyphs.For(ws.Name, focused: true, active: true)
-                        : ws.Name);
+                // Each monitor's currently displayed workspace gets the bold
+                // filled circled digit; everything else is a plain, legible
+                // digit. Which monitor has focus is shown by the brackets below
+                // (the un-bracketed group is the one you're on), not by a second
+                // glyph style — the thin outline circled digits were too hard to
+                // read on the bar. IsDisplayed is true for exactly one workspace
+                // per monitor, so this marks each monitor's current workspace the
+                // same way whether or not that monitor has focus.
+                segment.Append(ws.IsDisplayed
+                    ? WorkspaceGlyphs.For(ws.Name, focused: true, active: true)
+                    : ws.Name);
 
-                    if (ws.HasFocus)
-                    {
-                        var label = string.IsNullOrEmpty(ws.DisplayName) ? ws.Name : ws.DisplayName;
-                        focusedDetail = $"Workspace {label}";
-                    }
-                }
-                else
+                if (ws.HasFocus)
                 {
-                    // Another monitor: the whole group is bracketed below, and
-                    // the workspace it's currently displaying gets the outline
-                    // circled digit so you can still see where it sits.
-                    segment.Append(ws.IsDisplayed
-                        ? WorkspaceGlyphs.For(ws.Name, focused: false, active: true)
-                        : ws.Name);
+                    var label = string.IsNullOrEmpty(ws.DisplayName) ? ws.Name : ws.DisplayName;
+                    focusedDetail = $"Workspace {label}";
                 }
             }
 

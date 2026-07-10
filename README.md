@@ -186,12 +186,14 @@ gives an extension no way to know which monitor a band is painting on
 (`GetDockBands()` takes no monitor context), so one strip is unavoidably shared
 across all docks. To keep that from looking like every monitor mirrors the same
 state, the strip groups workspaces by monitor (ordered left-to-right by physical
-position, from `query monitors`): the **focused** monitor's group is shown as
-glyphs, and every other monitor's group is wrapped in `[brackets]` with that
-monitor's currently displayed workspace shown as the outline circled digit. So
-`❸ 5 [1 2 4 ⑥]` reads *"this monitor is on workspace 3 (and also has 5); the
-other monitor is showing 6 (and also has 1, 2, 4)."* On a single monitor there
-are no brackets and it looks the way it always did.
+position, from `query monitors`). Each monitor's currently displayed workspace
+is the **bold filled circled digit**; every other workspace is a plain digit.
+Which monitor has focus is shown by the **brackets**: every monitor *except* the
+one you're on is wrapped in `[brackets]`, so the un-bracketed group is where you
+are. So `❸ 5 [1 2 4 ❻]` reads *"I'm on this monitor, showing workspace 3 (which
+also has 5); the other monitor is showing 6 (and also has 1, 2, 4)."* Switching
+monitors just moves the brackets. On a single monitor there are no brackets and
+it looks the way it always did.
 
 ## Privacy
 

@@ -19,11 +19,13 @@ maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
   Command Palette Dock (filled glyph = focused, outline = active, plain = empty),
   with the focused workspace detailed in the subtitle.
 - **Multi-monitor grouping** — the strip now groups workspaces by monitor
-  (ordered left-to-right by physical position): the focused monitor's group
-  shows as glyphs, and every other monitor's group is bracketed with its
-  displayed workspace as the outline circled digit (e.g. `❸ 5 [1 2 4 ⑥]`). The
-  Dock API shares one band across all monitors, so this replaces the previous
-  behavior where every monitor's dock showed an identical, focus-only strip.
+  (ordered left-to-right by physical position). Each monitor's currently
+  displayed workspace is the bold filled circled digit; every other workspace is
+  a plain digit. Focus is shown by brackets: every monitor except the one you're
+  on is bracketed, so the un-bracketed group is where you are (e.g.
+  `❸ 5 [1 2 4 ❻]`). The Dock API shares one band across all monitors, so this
+  replaces the previous behavior where every monitor's dock showed an identical,
+  focus-only strip.
 - **Top-level "GlazeWM Workspaces" palette page** to switch workspaces from the
   palette (type / arrow / Enter).
 - Live updates via GlazeWM v3's IPC WebSocket (`ws://127.0.0.1:6123`): subscribes

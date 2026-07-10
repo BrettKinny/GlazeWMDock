@@ -118,10 +118,23 @@ In Visual Studio: right-click the project → **Publish → Create App Packages�
 Microsoft Store** using your reservation. This produces a signed `.msixupload`
 bundle (x64 + ARM64). No manual `signtool` step; the Store handles signing.
 
-> CLI alternative: `Create App Packages` is the reliable path for the
-> `.msixupload` format the Store expects. The `dotnet build
-> -p:GenerateAppxPackageOnBuild=true` flow used for sideloading produces a
-> single-arch `.msix`, not the multi-arch `.msixupload` bundle.
+> The plain `dotnet build -p:GenerateAppxPackageOnBuild=true` flow used for
+> sideloading produces a single-architecture `.msix`. Use the bundle properties
+> below when building for Store submission.
+
+The multi-architecture package can also be built from the command line with the
+MSIX targets. Disable the optional symbol package when `mspdbcmf.exe` is not
+installed; the Store accepts the resulting bundle directly, or it can be wrapped
+as the sole file in a `.msixupload` ZIP archive:
+
+```powershell
+dotnet msbuild .\GlazeWMDock\GlazeWMDock.csproj -restore -t:Build `
+  -p:Configuration=Release -p:Platform=x64 `
+  -p:GenerateAppxPackageOnBuild=true `
+  -p:UapAppxPackageBuildMode=StoreUpload `
+  -p:AppxBundle=Always '-p:AppxBundlePlatforms=x64|ARM64' `
+  -p:AppxPackageSigningEnabled=false -p:AppxSymbolPackageEnabled=false
+```
 
 ### 5. Verify the CmdPal registration survives
 The `<uap3:AppExtension Name="com.microsoft.commandpalette" …>` block in the

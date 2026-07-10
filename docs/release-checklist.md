@@ -29,8 +29,8 @@ Legend: `[x]` done, `[ ]` to do.
 
 ## Make the repo public
 
-- [ ] Final skim of the files above (nothing else machine-specific slipped in).
-- [ ] Flip visibility:
+- [x] Final skim of the files above (nothing else machine-specific slipped in).
+- [x] Flip visibility:
   ```
   gh repo edit BrettKinny/GlazeWMDock --visibility public --accept-visibility-change-consequences
   ```
@@ -66,18 +66,21 @@ See [`publishing-to-store.md`](publishing-to-store.md) for step detail and
   `scale-200`/`targetsize-24_altform-unplated` variants — no SmallTile/LargeTile
   are used by this project. To re-render, re-run the block in
   `publishing-to-store.md` §Assets.
-- [ ] Store screenshots: capture the dock strip + switcher page (none exist yet).
-  Shot list + captions in `store-listing.md`. Add to the README too. **(Windows)**
+- [x] Store screenshots captured at 3440×1440: full-size Dock strip, compact
+  Dock, and switcher page under `docs/images/`; added to the README.
 - [x] Listing copy drafted — description, short description, category, search
   terms, what's-new, privacy statement text: see `store-listing.md`.
 - [x] Capability justifications drafted (`runFullTrust`, `internetClient`): see
   `store-listing.md` (fuller wording than the notes in `publishing-to-store.md`).
 - [x] Reviewer testing instructions drafted: see `store-listing.md`
   (Supplemental info → Additional Testing Information).
-- [ ] Build the multi-arch package: VS → *Publish → Create App Packages →
-  Microsoft Store* (produces the `.msixupload`). The Store re-signs, so no
-  `signtool`/`.cer` needed. **(Windows-only — the one remaining hard gate.)**
-- [ ] Run the Windows App Certification Kit (WACK) on the package. **(Windows)**
+- [x] Built the x64 + ARM64 Store upload at
+  `GlazeWMDock/AppPackages/GlazeWMDock_1.0.0.0_x64_ARM64_bundle.msixupload`.
+  The Store re-signs it, so no test certificate is included in the upload.
+- [x] Ran Windows App Certification Kit 10.0.26100.6901 against the installed
+  package. Overall result: **Warning**. Required tests pass; the optional
+  blocked-executable scan flags strings in the self-contained .NET runtime, and
+  DPI detection warns despite `app.manifest` declaring `PerMonitorV2`.
 - [ ] Complete the listing in Partner Center by pasting from `store-listing.md`;
   run the IARC age-rating questionnaire; set free pricing + all markets. Add a
   privacy policy URL (Store requires one).

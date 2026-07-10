@@ -85,10 +85,8 @@ GlazeWM Workspaces
 - **Copyright:** © 2026 Brett Kinny
 - **Developed by / Published by:** Brett Kinny
 - **Website:** https://github.com/BrettKinny/GlazeWMDock  _(if repo is public)_
-- **Privacy policy URL:** required by the Store. Point at a short privacy
-  statement — the README's privacy section or a `PRIVACY.md`. Content: "This app
-  collects and transmits no data. It communicates only with a local GlazeWM
-  instance over a loopback socket (ws://127.0.0.1:6123)."
+- **Privacy policy URL:**
+  https://github.com/BrettKinny/GlazeWMDock/blob/main/PRIVACY.md
 - **Support contact:** brett@squarewavesystems.com.au
 
 ---
@@ -133,21 +131,16 @@ Paste these when prompted.
 
 ---
 
-## Screenshots _(you — needs Windows)_
+## Screenshots — done
 
-The Store requires at least one screenshot (1366×768 or larger, PNG). Capture on
-Windows with the extension running:
+The Store requires at least one screenshot (1366×768 or larger, PNG). The
+following 3440×1440 captures are ready under `docs/images/`:
 
-1. **The Dock strip in context** — the Command Palette Dock at the top of the
-   screen showing the workspace strip (`1 ❷ 3`), with a couple of tiled windows
-   behind it so the GlazeWM context is obvious. _Caption:_ "Live workspace strip
-   on the Command Palette Dock."
-2. **The switcher page** — Command Palette open on the GlazeWM Workspaces
-   switcher list. _Caption:_ "Click the strip to jump between workspaces."
-3. _(optional)_ **Settings → Bands** with the toggle on. _Caption:_ "Enable it
-   from Command Palette settings."
-
-Also drop shots 1–2 into the README's Screenshots section while you're at it.
+1. `dock-strip-default.png` — _Caption:_ "Live workspace strip on the Command
+   Palette Dock."
+2. `switcher-page.png` — _Caption:_ "Click the strip to jump between
+   workspaces."
+3. `dock-strip-compact.png` — optional alternate showing the compact Dock.
 
 ---
 

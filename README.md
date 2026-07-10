@@ -28,10 +28,13 @@ each change.
 
 ## Screenshots
 
-<!-- Drop images at docs/images/ and reference them here, e.g.:
-     ![Workspace strip on the Dock](docs/images/dock-strip.png)
-     ![Switcher page](docs/images/switcher-page.png) -->
-_Screenshots coming soon._
+![Live workspace strip on the Command Palette Dock](docs/images/dock-strip-default.png)
+
+![GlazeWM workspace switcher page](docs/images/switcher-page.png)
+
+The Dock also supports a compact icon-first layout:
+
+![GlazeWM Workspaces in the compact Dock](docs/images/dock-strip-compact.png)
 
 ---
 
@@ -199,6 +202,8 @@ The extension communicates only with a local GlazeWM instance over loopback
 has no telemetry or analytics. It writes a local, best-effort diagnostic log
 (connection status and exception types only, no window titles or personal data)
 under the app's `LocalState` folder, rotated at 512 KB.
+
+See the full [privacy policy](PRIVACY.md).
 
 ## Caveats and known limitations
 

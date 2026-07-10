@@ -1,0 +1,14 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Trace of Segoe Fluent Icons U+E7F4 as it actually renders: a monitor. -->
+  <!-- Screen: outlined rounded rect. Stand: neck + base. Monochrome. -->
+  <g fill="none" stroke="currentColor" color="#e8e8ec" stroke-width="12" stroke-linejoin="round">
+    <!-- screen -->
+    <rect x="40" y="52" width="176" height="124" rx="14"/>
+  </g>
+  <g fill="currentColor" color="#e8e8ec">
+    <!-- neck -->
+    <rect x="116" y="176" width="24" height="18"/>
+    <!-- base -->
+    <rect x="82" y="192" width="92" height="14" rx="7"/>
+  </g>
+</svg>

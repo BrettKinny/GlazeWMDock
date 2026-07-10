@@ -27,6 +27,9 @@ Legend: `[x]` done, `[ ]` to do.
   `*.msixupload`).
 - [x] Package version restructured to `1.0.0.0` and the version-numbering
   guidance in `publishing-to-store.md` corrected.
+- [x] Latest commit (`2ba52d2`) tagged `v1.0` (annotated) and pushed. Note: no CI
+  runs on the tag — the repo has no `.github/workflows/`; the MSIX is built by
+  hand in Visual Studio (see the Store submission steps below).
 
 ## Make the repo public
 

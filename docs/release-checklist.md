@@ -160,6 +160,18 @@ See [`publishing-to-store.md`](publishing-to-store.md) for step detail and
     regressions in the technical-compliance tests.
 - [ ] Resubmit `1.0.1.0` in Partner Center: upload the `.msixupload`, paste the
   updated Additional Testing Information, keep the existing listing copy.
+
+  **Submitting from a different machine.** `*.msixupload` is gitignored, so the
+  27 MB bundle is *not* in the repo — either copy
+  `GlazeWMDock/AppPackages/GlazeWMDock_1.0.1.0_x64_ARM64_bundle.msixupload`
+  across, or rebuild it with the command in
+  [`publishing-to-store.md`](publishing-to-store.md) §4 "Build the Store
+  package". Rebuilding needs the .NET 10 SDK and the MSIX build tools but **no**
+  signing certificate — Store bundles are unsigned and the Store re-signs, so the
+  self-signed `CN=GlazeWMDock Dev` cert is only needed for local sideload
+  testing. Verify a rebuild before uploading: bundle identity
+  `BrettKinny.GlazeWMWorkspaces` / `CN=990828D1-845D-4BDA-A62D-6048473196F7` /
+  `1.0.1.0`, containing both x64 and ARM64 at revision field `0`.
 - [ ] Confirm certification passes and the Store listing is publicly reachable.
 - [ ] After it's live: uninstall the sideloaded dev package to avoid duplicate
   providers, `Get-AppxPackage -Name GlazeWMDock | Remove-AppxPackage`.

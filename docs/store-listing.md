@@ -1,9 +1,14 @@
 # Store listing content — GlazeWM Workspaces
 
-> **Release status:** Version `1.0.0.0` was submitted to Microsoft on
-> **2026-07-11** and is in certification. Partner Center Store ID:
-> `9NTLS4PBWN3X`. Publishing is configured to begin automatically after the
-> submission passes certification.
+> **Release status:** Version `1.0.0.0` was submitted on **2026-07-11** and
+> **failed certification** under policy 10.1.2 ("The product crashes at
+> launch"); it was never published. Root cause and fix are in
+> [`release-checklist.md`](release-checklist.md). `1.0.1.0` carries the fix and
+> is the version to resubmit. Partner Center Store ID: `9NTLS4PBWN3X`.
+>
+> Before resubmitting, extend **Additional Testing Information** below to cover
+> the GlazeWM prerequisite — the reviewer's device has neither PowerToys nor
+> GlazeWM installed.
 
 Ready-to-paste copy for the Partner Center listing. Product: **GlazeWM
 Workspaces** · Store ID **9NTLS4PBWN3X** · PFN
@@ -80,6 +85,9 @@ GlazeWM Workspaces
 > Initial release. Live GlazeWM workspace strip on the Command Palette Dock, with
 > a click-through switcher page. x64 and ARM64.
 
+(For `1.0.1.0`, keep the same copy — nothing user-facing changed beyond a
+launched-directly-from-Start dialog, and it is still the first release users see.)
+
 ## Store listing → Search terms (up to 7)
 
 `GlazeWM`, `tiling`, `window manager`, `workspaces`, `Command Palette`,
@@ -120,19 +128,53 @@ Paste these when prompted.
 
 ## Supplemental info → Additional Testing Information (for certifiers)
 
-> This extension only appears when its prerequisites are running. To test:
-> 1. Install Microsoft PowerToys and enable the **Command Palette**.
-> 2. Install and run **GlazeWM v3+** (https://github.com/glzr-io/glazewm) with at
->    least one workspace active.
-> 3. Open Command Palette → **Settings → enable Dock** (Position: Top).
-> 4. **Settings → Bands → enable "GlazeWM Workspaces"**. A strip of workspace
->    numbers appears on the Dock; the focused one is highlighted.
-> 5. Switch workspaces (Alt+1..0) and confirm the strip updates. Click the strip
->    to open the switcher page.
+> **Please read first — this product is a Command Palette extension, not a
+> standalone app.** It has no main window of its own. Command Palette starts it
+> as a background COM server and draws its output inside Command Palette's own
+> UI, so there is nothing to see in the app's own process.
 >
-> Without GlazeWM running the extension loads but shows no workspaces (it has
-> nothing to display) — this is expected, not a failure. The app never connects
-> to any remote server; the only network use is the local loopback IPC socket.
+> **If you launch it directly** (Start menu, app list, or its AUMID) it displays
+> an information dialog explaining that it is a Command Palette extension and
+> listing the prerequisites, then closes when you dismiss it. That dialog **is**
+> the expected result of a direct launch — it is not an error state, and the app
+> has not crashed or failed to start. Version 1.0.0.0 of this submission was
+> declined for "crashes at launch"; the cause was that a direct launch showed no
+> UI at all, which this version fixes.
+>
+> To see the extension actually working, both prerequisites must be present:
+>
+> 1. Install Microsoft PowerToys and enable the **Command Palette**:
+>    `winget install Microsoft.PowerToys`
+> 2. Install and run **GlazeWM v3+**: `winget install glzr-io.glazewm`
+>    (source: https://github.com/glzr-io/glazewm). It is a tiling window manager;
+>    let it start and leave at least one workspace active. GlazeWM exposes a local
+>    IPC WebSocket on `ws://127.0.0.1:6123` — that socket is the extension's only
+>    data source.
+> 3. Open Command Palette (default hotkey **Win+Alt+Space**). If the extension is
+>    not listed yet, run Command Palette's **Reload** command, or restart it —
+>    newly installed extensions are picked up on load.
+> 4. Command Palette → **Settings → enable Dock** (Position: Top).
+> 5. Add the **"GlazeWM Workspaces"** band to the Dock. A strip of workspace
+>    numbers appears; the focused workspace is highlighted, and on a
+>    multi-monitor machine workspaces are grouped per monitor.
+> 6. Switch workspaces (Alt+1..0) and confirm the strip updates live. Selecting
+>    the strip opens a switcher page; typing "GlazeWM" in Command Palette reaches
+>    the same page.
+>
+> **On a machine without GlazeWM installed** (likely your test device): the
+> extension still loads and Command Palette stays fully usable. It simply has no
+> workspaces to display. Internally it fails to open the loopback socket, records
+> the failure in its local log, and retries every few seconds — it does not throw,
+> block Command Palette, or terminate. This has been verified directly by running
+> the extension with nothing listening on the IPC port.
+>
+> Networking: the only network activity is the loopback IPC socket above. The app
+> contacts no remote server and transmits no data off the device. `internetClient`
+> is declared solely because a loopback WebSocket requires it.
+>
+> Diagnostics: a local-only log is written to the package's `LocalState` folder as
+> `glazewmdock.log` (connection status and exception type names only, no user
+> data). It is the fastest way to confirm the extension started.
 
 ---
 

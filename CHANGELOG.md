@@ -12,7 +12,20 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
 - Preparing the first public / Microsoft Store release: MIT license, public docs,
   community-health files, and package version restructured to `1.0.0.0`.
 
-## [1.0.0] - first public release (pending)
+## [1.0.1] - certification fix (pending)
+
+### Fixed
+- Launching the executable directly (Start menu tile, or its AUMID) no longer
+  exits instantly with no window. This project is a `WinExe` with no console, so
+  the old no-arguments path wrote to a console that did not exist and terminated
+  within milliseconds. Store certification launches the app's entry point and
+  watches it, so that was indistinguishable from a crash — it is why the
+  `1.0.0.0` submission was rejected under policy 10.1.2 ("The product crashes at
+  launch"). Direct launches now show a dialog explaining that this package is a
+  Command Palette extension, listing the PowerToys and GlazeWM prerequisites,
+  and exit gracefully when dismissed.
+
+## [1.0.0] - rejected at certification, never published
 
 ### Added
 - Dock band: the GlazeWM workspace strip rendered as live text on the Command

@@ -96,6 +96,70 @@ See [`publishing-to-store.md`](publishing-to-store.md) for step detail and
   Center accepted it and began pre-processing; it will publish automatically if
   certification passes. Microsoft advises that certification normally takes a
   few hours but can take up to three business days.
+- [x] Certification **failed**. Partner Center rejected `1.0.0.0` under policy
+  10.1.2 ("The product crashes at launch"), observed on a Dell Inspiron 13-5379
+  running OS build 26200.8457, with no error message. The listing was never
+  published: `apps.microsoft.com/detail/9NTLS4PBWN3X` returns HTTP 410 and the
+  DisplayCatalog API returns 404.
+- [x] Root-caused. Not a real crash: the certification tester launches the
+  Start-menu tile, and the no-arguments branch of `Program.cs` wrote to a console
+  that a `WinExe` does not have, then exited within milliseconds with no window.
+  A process that appears and vanishes reads as a crash. Reproduced locally.
+- [x] Fixed in `1.0.1.0`. Direct launches now show a `MessageBoxW` explaining
+  that this is a Command Palette extension and listing the PowerToys and GlazeWM
+  prerequisites, then exit cleanly when dismissed. Verified both paths on a
+  clean install: tile launch keeps a titled window alive and exits gracefully,
+  and Command Palette still activates the windowless COM server with IPC
+  connected.
+- [x] Expanded Additional Testing Information in `store-listing.md`. It now leads
+  with the fact that this is an extension with no main window, and that a direct
+  launch shows an information dialog which **is** the expected result rather than
+  a failure — the omission that caused the rejection. Also added verified winget
+  IDs (`glzr-io.glazewm`, `Microsoft.PowerToys`), Command Palette's **Reload**
+  step for newly installed extensions, and the log location.
+- [x] Verified the graceful-degradation claim before asserting it to reviewers.
+  GlazeWM runs elevated, so rather than stopping it, a throwaway build pointing at
+  a dead loopback port reproduced the "GlazeWM absent" path exactly: the extension
+  logs `WebSocketException: Unable to connect to the remote server` and retries
+  every few seconds; Command Palette and the COM server both stay alive. The
+  throwaway build was deleted — a dead-port package must never ship.
+- [x] **Decided against** `AppListEntry="none"` for this resubmission. It would
+  remove the Start-menu tile entirely, but Partner Center reportedly rejects such
+  a package as a *headless app* without the `HeadlessAppBypass` waiver
+  (storeops@microsoft.com, per-product) — and that gate is not documented on
+  Microsoft Learn, so it is unverified. Chasing the waiver means an email round
+  trip and a second submission cycle for no user-visible benefit, since the
+  first-run dialog already resolves the launch failure. Keep the tile. Revisit
+  only if certification objects to the dialog itself.
+- [x] Rebuilt the x64 + ARM64 Store upload at
+  `GlazeWMDock/AppPackages/GlazeWMDock_1.0.1.0_x64_ARM64_bundle.msixupload`
+  (27.1 MB; x64 13.8 MB + ARM64 13.3 MB, unsigned so the Store re-signs). Bundle
+  manifest verified: `BrettKinny.GlazeWMWorkspaces`,
+  `CN=990828D1-845D-4BDA-A62D-6048473196F7`, `1.0.1.0`, revision field `0`.
+  Confirmed the fix is in the shipped `GlazeWMDock.dll` (the `MessageBoxW` import
+  and dialog text are present; the old console string is gone).
+- [x] Re-ran Windows App Certification Kit **10.0.26100.8249** against the
+  installed `1.0.1.0`. Overall **Warning**, unchanged from the `1.0.0.0` baseline:
+  22 pass, 1 fail, 1 warning.
+  - The fail is the **optional** `Blocked executables` scan (`OPTIONAL="TRUE"`),
+    entirely from the bundled self-contained .NET runtime — `coreclr.dll`,
+    `clrjit.dll`, `System.Private.CoreLib.dll`, `System.Net.Sockets.dll` and
+    friends referencing `CreateProcessW` or containing strings like `cmd`,
+    `bash`, `MSBuild` — plus the apphost's own `ShellExecuteW`. Nothing from this
+    project's own code.
+  - The warning is `DPIAwarenessValidation`, and it is a **false positive**: its
+    own message is "Failed to process the binary … GlazeWMDock.exe", i.e. WACK
+    could not parse the apphost. `PerMonitorV2` and `dpiAware true/PM` are
+    confirmed embedded in the shipped exe, and querying the running process
+    returns `PER_MONITOR_DPI_AWARE`. This matters more than it used to, because
+    the first-run dialog is this app's only real window.
+  - The new `user32.dll!MessageBoxW` import appears only in the informational
+    `DEPENDENCY_INFORMATION` inventory, not in any test result.
+  - Note WACK never caught the launch bug that failed certification, so a Warning
+    here is not evidence the resubmission will pass — it only rules out
+    regressions in the technical-compliance tests.
+- [ ] Resubmit `1.0.1.0` in Partner Center: upload the `.msixupload`, paste the
+  updated Additional Testing Information, keep the existing listing copy.
 - [ ] Confirm certification passes and the Store listing is publicly reachable.
 - [ ] After it's live: uninstall the sideloaded dev package to avoid duplicate
   providers, `Get-AppxPackage -Name GlazeWMDock | Remove-AppxPackage`.

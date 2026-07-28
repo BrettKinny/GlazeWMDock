@@ -11,7 +11,7 @@
   <Identity
     Name="BrettKinny.GlazeWMWorkspaces"
     Publisher="CN=990828D1-845D-4BDA-A62D-6048473196F7"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
   <!-- Store identity (Partner Center product "GlazeWM Workspaces", Store ID
        9NTLS4PBWN3X). PFN: BrettKinny.GlazeWMWorkspaces_qh71y33f4g84y. The Store
        re-signs the package, so no self-signed cert is used for Store builds.

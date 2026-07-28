@@ -153,6 +153,36 @@ it's one-click from Command Palette's gallery and installable via
 
 ## Things to watch during certification
 
+- **The app must survive being launched directly.** This is what rejected
+  `1.0.0.0` (policy 10.1.2, "The product crashes at launch", observed on a Dell
+  Inspiron 13-5379 running 26200.8457). Certification launches the manifest's
+  `<Application Id="App">` entry point and watches the process. The package is a
+  `WinExe` with no console, so the original no-arguments branch in `Program.cs`
+  wrote to a nonexistent console and exited within milliseconds with no window —
+  indistinguishable from a crash. `Program.ShowFirstRunDialog` now puts a real
+  `MessageBoxW` on screen and exits gracefully when dismissed. Keep that
+  property: **any** direct launch must show UI, not exit silently. Reproduce with
+  `Start-Process "shell:AppsFolder\BrettKinny.GlazeWMWorkspaces_<hash>!App"` and
+  confirm the process is still alive with a window after a few seconds.
+- **Hiding the Start-menu tile is not free.** Adding
+  `AppListEntry="none"` to `uap:VisualElements` is the documented way to drop the
+  tile for an extension-only package, and Microsoft's own
+  `CmdPalGitHubExtension` does it. But Partner Center classifies such a package
+  as a *headless app* and rejects the upload unless the product has the
+  `HeadlessAppBypass` waiver, which is requested per-product by emailing
+  storeops@microsoft.com with the Store ID (`9NTLS4PBWN3X`). This is not
+  documented on Microsoft Learn — it is reported by third parties only — so
+  treat it as unverified and do not add the attribute to a submission build
+  before the waiver is confirmed. The first-run dialog above solves the
+  certification failure on its own, without a waiver.
+- **Reviewer prerequisites are non-obvious.** The reviewer's device has neither
+  PowerToys/Command Palette nor GlazeWM, so with no notes they see nothing at
+  all and file it under 10.1.2 again. Additional Testing Information must cover
+  installing PowerToys, opening Command Palette, enabling the Dock and adding the
+  band, and installing GlazeWM (the strip reads its IPC socket on
+  `ws://127.0.0.1:6123`). It should also state that the extension degrades
+  quietly when GlazeWM is absent: `GlazeWmClient.RunAsync` catches the failed
+  connect, logs it, and retries every 3 seconds rather than throwing.
 - `runFullTrust` justification. The manifest declares
   `<rescap:Capability Name="runFullTrust" />` (required: this is a full-trust
   desktop COM server, not a sandboxed UWP app). `runFullTrust` is a restricted

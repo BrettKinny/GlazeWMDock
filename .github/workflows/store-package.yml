@@ -1,0 +1,280 @@
+name: Build Microsoft Store package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/store-package.yml"
+      - "GlazeWMDock/**"
+      - "GlazeWMDock.sln"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "nuget.config"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-package-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  STORE_IDENTITY_NAME: BrettKinny.GlazeWMWorkspaces
+  STORE_PUBLISHER: CN=990828D1-845D-4BDA-A62D-6048473196F7
+  STORE_VERSION: 1.0.1.0
+
+jobs:
+  build-store-package:
+    name: Build x64 + ARM64 Store upload
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.302
+
+      - name: Record toolchain
+        shell: pwsh
+        run: |
+          "Runner image: $env:ImageOS $env:ImageVersion"
+          dotnet --info
+
+      - name: Validate source package identity
+        shell: pwsh
+        run: |
+          [xml]$manifest = Get-Content -Raw .\GlazeWMDock\Package.appxmanifest
+          $identity = $manifest.Package.Identity
+
+          if ($identity.GetAttribute('Name') -ne $env:STORE_IDENTITY_NAME) {
+            throw "Unexpected source package name: $($identity.GetAttribute('Name'))"
+          }
+          if ($identity.GetAttribute('Publisher') -ne $env:STORE_PUBLISHER) {
+            throw "Unexpected source publisher: $($identity.GetAttribute('Publisher'))"
+          }
+          if ($identity.GetAttribute('Version') -ne $env:STORE_VERSION) {
+            throw "Unexpected source version: $($identity.GetAttribute('Version'))"
+          }
+          if (($identity.GetAttribute('Version') -split '\.')[3] -ne '0') {
+            throw "Microsoft Store package revision must be 0."
+          }
+
+      - name: Build Store upload
+        shell: pwsh
+        run: |
+          dotnet msbuild .\GlazeWMDock\GlazeWMDock.csproj -restore -t:Build `
+            -p:Configuration=Release -p:Platform=x64 `
+            -p:GenerateAppxPackageOnBuild=true `
+            -p:UapAppxPackageBuildMode=StoreUpload `
+            -p:AppxBundle=Always '-p:AppxBundlePlatforms=x64|ARM64' `
+            -p:AppxPackageSigningEnabled=false `
+            -p:AppxSymbolPackageEnabled=false
+
+      - name: Locate Store upload
+        id: package
+        shell: pwsh
+        run: |
+          $uploads = @(Get-ChildItem -Path .\GlazeWMDock\AppPackages -Recurse -Filter *.msixupload)
+          if ($uploads.Count -ne 1) {
+            throw "Expected exactly one .msixupload, found $($uploads.Count)."
+          }
+
+          $upload = $uploads[0]
+          "path=$($upload.FullName)" >> $env:GITHUB_OUTPUT
+          "name=$($upload.Name)" >> $env:GITHUB_OUTPUT
+          "size=$($upload.Length)" >> $env:GITHUB_OUTPUT
+          "sha256=$((Get-FileHash -Algorithm SHA256 $upload.FullName).Hash)" >> $env:GITHUB_OUTPUT
+
+          $upload | Format-List FullName, Length, LastWriteTimeUtc
+          Get-FileHash -Algorithm SHA256 $upload.FullName
+
+      - name: Inspect Store upload
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $inspectionRoot = Join-Path $env:RUNNER_TEMP "store-upload"
+          $uploadRoot = Join-Path $inspectionRoot "upload"
+          $bundleRoot = Join-Path $inspectionRoot "bundle"
+          New-Item -ItemType Directory -Force $uploadRoot, $bundleRoot | Out-Null
+
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+            '${{ steps.package.outputs.path }}',
+            $uploadRoot
+          )
+
+          $bundles = @(Get-ChildItem $uploadRoot -Recurse -Filter *.msixbundle)
+          if ($bundles.Count -ne 1) {
+            throw "Expected exactly one .msixbundle in the upload, found $($bundles.Count)."
+          }
+
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+            $bundles[0].FullName,
+            $bundleRoot
+          )
+
+          $manifestPath = Join-Path $bundleRoot "AppxMetadata\AppxBundleManifest.xml"
+          if (!(Test-Path $manifestPath)) {
+            throw "Bundle manifest not found at $manifestPath."
+          }
+
+          [xml]$manifest = Get-Content -Raw $manifestPath
+          $identity = $manifest.SelectSingleNode("/*[local-name()='Bundle']/*[local-name()='Identity']")
+          $identityName = $identity.GetAttribute('Name')
+          $publisher = $identity.GetAttribute('Publisher')
+          $version = $identity.GetAttribute('Version')
+          if ($identityName -ne $env:STORE_IDENTITY_NAME) {
+            throw "Unexpected bundle identity: $identityName"
+          }
+          if ($publisher -ne $env:STORE_PUBLISHER) {
+            throw "Unexpected publisher: $publisher"
+          }
+          if ($version -ne $env:STORE_VERSION) {
+            throw "Unexpected version: $version"
+          }
+
+          $applicationPackages = @(
+            $manifest.SelectNodes(
+              "/*[local-name()='Bundle']/*[local-name()='Packages']/*[local-name()='Package'][@Type='application']"
+            )
+          )
+          $architectures = @($applicationPackages | ForEach-Object Architecture | Sort-Object -Unique)
+          if (($architectures -join ',') -ne 'arm64,x64') {
+            throw "Expected application packages for arm64 and x64; found: $($architectures -join ', ')"
+          }
+
+          $normalizedManifests = @()
+          foreach ($package in $applicationPackages) {
+            $architecture = $package.GetAttribute('Architecture')
+            $packageRoot = Join-Path $inspectionRoot $architecture
+            $packagePath = Join-Path $bundleRoot $package.GetAttribute('FileName')
+            New-Item -ItemType Directory -Force $packageRoot | Out-Null
+            [System.IO.Compression.ZipFile]::ExtractToDirectory($packagePath, $packageRoot)
+
+            $packageManifestPath = Join-Path $packageRoot 'AppxManifest.xml'
+            [xml]$packageManifest = Get-Content -Raw $packageManifestPath
+            $packageIdentity = $packageManifest.SelectSingleNode(
+              "/*[local-name()='Package']/*[local-name()='Identity']"
+            )
+
+            if ($packageIdentity.GetAttribute('Name') -ne $env:STORE_IDENTITY_NAME) {
+              throw "$architecture package has an unexpected identity."
+            }
+            if ($packageIdentity.GetAttribute('Publisher') -ne $env:STORE_PUBLISHER) {
+              throw "$architecture package has an unexpected publisher."
+            }
+            if ($packageIdentity.GetAttribute('Version') -ne $env:STORE_VERSION) {
+              throw "$architecture package has an unexpected version."
+            }
+            if ($packageIdentity.GetAttribute('ProcessorArchitecture') -ne $architecture) {
+              throw "$architecture package manifest has the wrong processor architecture."
+            }
+
+            $exeServer = $packageManifest.SelectSingleNode(
+              "//*[local-name()='ComServer']/*[local-name()='ExeServer']"
+            )
+            if ($exeServer.GetAttribute('Executable') -ne 'GlazeWMDock.exe' -or
+                $exeServer.GetAttribute('Arguments') -ne '-RegisterProcessAsComServer') {
+              throw "$architecture package has an unexpected COM server registration."
+            }
+
+            $comClass = $exeServer.SelectSingleNode("./*[local-name()='Class']")
+            $appExtension = $packageManifest.SelectSingleNode(
+              "//*[local-name()='AppExtension' and @Name='com.microsoft.commandpalette']"
+            )
+            $createInstance = $appExtension.SelectSingleNode(
+              ".//*[local-name()='CreateInstance']"
+            )
+            $expectedClassId = '7E2D9F44-3B6A-4C1E-9A57-2F8B1D6C4E90'
+            if ($comClass.GetAttribute('Id') -ne $expectedClassId -or
+                $createInstance.GetAttribute('ClassId') -ne $expectedClassId) {
+              throw "$architecture package has inconsistent CmdPal COM activation."
+            }
+
+            $capabilities = @(
+              $packageManifest.SelectNodes(
+                "/*[local-name()='Package']/*[local-name()='Capabilities']/*"
+              ) | ForEach-Object { $_.GetAttribute('Name') }
+            )
+            foreach ($requiredCapability in @('internetClient', 'runFullTrust')) {
+              if ($requiredCapability -notin $capabilities) {
+                throw "$architecture package is missing $requiredCapability."
+              }
+            }
+
+            foreach ($requiredFile in @(
+              'GlazeWMDock.exe',
+              'GlazeWMDock.dll',
+              'Assets\StoreLogo.png',
+              'Assets\Square44x44Logo.scale-200.png',
+              'Assets\Square150x150Logo.scale-200.png',
+              'Assets\Wide310x150Logo.scale-200.png',
+              'Assets\SplashScreen.scale-200.png'
+            )) {
+              if (!(Test-Path (Join-Path $packageRoot $requiredFile))) {
+                throw "$architecture package is missing $requiredFile."
+              }
+            }
+
+            $assemblyBytes = [System.IO.File]::ReadAllBytes(
+              (Join-Path $packageRoot 'GlazeWMDock.dll')
+            )
+            # .NET user strings are UTF-16, but their byte offset in a PE file
+            # is not guaranteed to be even. Decode both alignments.
+            $assemblyTextEven = [System.Text.Encoding]::Unicode.GetString($assemblyBytes)
+            $assemblyTextOdd = [System.Text.Encoding]::Unicode.GetString(
+              $assemblyBytes, 1, $assemblyBytes.Length - 1
+            )
+            $dialogText =
+              'GlazeWM Workspaces is a Command Palette extension, not a standalone app'
+            if (!$assemblyTextEven.Contains($dialogText) -and
+                !$assemblyTextOdd.Contains($dialogText)) {
+              throw "$architecture package does not contain the direct-launch dialog fix."
+            }
+            $rejectedText = 'Not being launched as an extension... exiting.'
+            if ($assemblyTextEven.Contains($rejectedText) -or
+                $assemblyTextOdd.Contains($rejectedText)) {
+              throw "$architecture package still contains the rejected direct-launch path."
+            }
+
+            $architecturePattern = 'ProcessorArchitecture="' +
+              [regex]::Escape($architecture) + '"'
+            $normalizedManifests += ($packageManifest.OuterXml -replace $architecturePattern,
+              'ProcessorArchitecture="ARCH"')
+          }
+
+          if ($normalizedManifests[0] -cne $normalizedManifests[1]) {
+            throw "The x64 and arm64 package manifests differ beyond processor architecture."
+          }
+
+          "Bundle: $($bundles[0].Name)"
+          "Identity: $identityName"
+          "Publisher: $publisher"
+          "Version: $version"
+          "Architectures: $($architectures -join ', ')"
+
+      - name: Publish Store upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: GlazeWMDock-Store-${{ github.sha }}
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Write build summary
+        shell: pwsh
+        run: |
+          @"
+          ## Microsoft Store package
+
+          - File: `${{ steps.package.outputs.name }}`
+          - Size: `${{ steps.package.outputs.size }}` bytes
+          - SHA-256: `${{ steps.package.outputs.sha256 }}`
+          - Architectures requested: x64, ARM64
+          - Signing: disabled (Microsoft Store re-signs the package)
+          "@ >> $env:GITHUB_STEP_SUMMARY

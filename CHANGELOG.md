@@ -12,6 +12,26 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
 - Preparing the first public / Microsoft Store release: MIT license, public docs,
   community-health files, and package version restructured to `1.0.0.0`.
 
+## [1.0.2] - unreleased
+
+### Added
+- Rename workspaces on the fly. Every row of the GlazeWM Workspaces page now has
+  a **Rename** context command that opens a one-field form and sends
+  `update-workspace-config --display-name` over IPC. Requires GlazeWM 3.x.
+
+### Changed
+- The Dock strip labels workspaces by `displayName` rather than `name`, so a
+  renamed workspace shows its name on the bar. Un-renamed workspaces are
+  unaffected — GlazeWM reports no display name for those and the parser already
+  falls back to the number — so they keep their circled digits.
+
+### Known limitations
+- Renames are GlazeWM runtime state, not config. They reset on
+  `wm-reload-config` or a GlazeWM restart; use `display_name` in `config.yaml`
+  for permanent names.
+- Names can't contain spaces. GlazeWM's IPC parser splits its command line on
+  whitespace with no quoting, so the form rejects them rather than truncating.
+
 ## [1.0.1] - certification fix (pending)
 
 ### Fixed

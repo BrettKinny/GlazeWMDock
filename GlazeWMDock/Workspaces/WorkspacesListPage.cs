@@ -50,7 +50,10 @@ internal sealed partial class WorkspacesListPage : ListPage
                 Subtitle = ws.HasFocus
                     ? "focused"
                     : ws.WindowCount == 1 ? "1 window" : $"{ws.WindowCount} windows",
+                // Keyed off Name, not DisplayName, so the icon stays a circled
+                // digit even once the title has been renamed to text.
                 Icon = new IconInfo(WorkspaceGlyphs.For(ws.Name, ws.HasFocus, active: true)),
+                MoreCommands = [new CommandContextItem(new RenameWorkspacePage(_client, ws))],
             });
         }
 

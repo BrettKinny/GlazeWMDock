@@ -141,6 +141,31 @@ Add-AppxPackage -Path <new .msix path> -ForceApplicationShutdown
 
 ---
 
+## Renaming a workspace
+
+Open the **GlazeWM Workspaces** page, highlight a workspace, and pick **Rename**
+from its context menu (`Ctrl+K`). The new name appears on the Dock strip in place
+of that workspace's circled digit; workspaces you haven't renamed keep their
+digits, so a partly-renamed setup reads like `1 ❷ 3 Scratch 5`. Submitting an
+empty name puts the number back.
+
+Two constraints, both from GlazeWM rather than this extension:
+
+- **No spaces.** GlazeWM's IPC command parser splits on whitespace and doesn't
+  honour quoting, so `My Work` is rejected. Use `My-Work` or `My_Work`. The form
+  tells you this instead of silently mangling the name.
+- **Names don't survive a restart.** The rename is sent as
+  `update-workspace-config --display-name`, which changes GlazeWM's runtime state
+  only — it doesn't rewrite `config.yaml`. Names reset on `wm-reload-config` or a
+  GlazeWM restart. For permanent names, set `display_name` under the matching
+  entry in your `workspaces:` block; the strip picks those up too.
+
+Renaming needs GlazeWM 3.x or newer (the release that added
+`update-workspace-config`). On older builds the command is rejected and the name
+stays as it was.
+
+---
+
 ## Configuration
 
 > Current limitation: there is no settings UI yet. Configuration lives in source

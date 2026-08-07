@@ -192,6 +192,12 @@ See [`publishing-to-store.md`](publishing-to-store.md) for step detail and
 
 - Version rule: the Store reserves the 4th version field (must stay `0`). Bump
   the 3rd field per submission: `1.0.0.0 → 1.0.1.0 → 1.0.2.0 …`.
+- A version bump touches **two** files. `.github/workflows/store-package.yml`
+  pins `STORE_VERSION` and asserts the manifest matches it, so bumping only
+  `Package.appxmanifest` fails CI at "Validate source package identity" with
+  `Unexpected source version`. That guard is deliberate — it stops a stray
+  manifest edit from shipping an unintended version to the Store — so bump both
+  together rather than loosening the check.
 - Configuration is compile-time only (`WorkspaceNames`, `ShowOnlyActive`, IPC
   port). Documented as a limitation; a CmdPal settings form is a good
   fast-follow.

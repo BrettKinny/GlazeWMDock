@@ -101,13 +101,20 @@ internal sealed partial class WorkspaceStripItem : ListItem
                 // read on the bar. IsDisplayed is true for exactly one workspace
                 // per monitor, so this marks each monitor's current workspace the
                 // same way whether or not that monitor has focus.
+                //
+                // The label is DisplayName, so a workspace renamed via the
+                // palette's Rename action shows its new name on the bar. For an
+                // un-renamed workspace DisplayName is just the number (the parser
+                // falls back to Name), so those still render as circled digits --
+                // only renamed ones widen into text.
+                var label = string.IsNullOrEmpty(ws.DisplayName) ? ws.Name : ws.DisplayName;
+
                 segment.Append(ws.IsDisplayed
-                    ? WorkspaceGlyphs.For(ws.Name, focused: true, active: true)
-                    : ws.Name);
+                    ? WorkspaceGlyphs.For(label, focused: true, active: true)
+                    : label);
 
                 if (ws.HasFocus)
                 {
-                    var label = string.IsNullOrEmpty(ws.DisplayName) ? ws.Name : ws.DisplayName;
                     focusedDetail = $"Workspace {label}";
                 }
             }

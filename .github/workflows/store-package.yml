@@ -21,7 +21,7 @@ concurrency:
 env:
   STORE_IDENTITY_NAME: BrettKinny.GlazeWMWorkspaces
   STORE_PUBLISHER: CN=990828D1-845D-4BDA-A62D-6048473196F7
-  STORE_VERSION: 1.0.1.0
+  STORE_VERSION: 1.0.2.0
 
 jobs:
   build-store-package:

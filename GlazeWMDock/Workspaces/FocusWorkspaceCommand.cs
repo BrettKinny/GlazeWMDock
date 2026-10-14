@@ -20,7 +20,7 @@ internal sealed partial class FocusWorkspaceCommand : InvokableCommand
 
         // A non-empty, stable Id is required for items that live on the Dock.
         Id = $"com.brettkinny.glazewmdock.focus.{workspaceName}";
-        Name = $"Workspace {workspaceName}";
+        Name = "Switch to";
     }
 
     public override ICommandResult Invoke()

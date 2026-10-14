@@ -16,14 +16,14 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
 
 ### Added
 - Rename workspaces on the fly. Every row of the GlazeWM Workspaces page now has
-  a **Rename** context command that opens a one-field form and sends
+  a **Rename** context command (`F2`) that opens a one-field form and sends
   `update-workspace-config --display-name` over IPC. Requires GlazeWM 3.x.
 
 ### Changed
-- The Dock strip labels workspaces by `displayName` rather than `name`, so a
-  renamed workspace shows its name on the bar. Un-renamed workspaces are
-  unaffected — GlazeWM reports no display name for those and the parser already
-  falls back to the number — so they keep their circled digits.
+- Dock strip shows a renamed workspace as number + name (`❶ Teams`, `4 Jira`);
+  un-renamed workspaces unchanged.
+- Workspaces page: title = name (or `Workspace N`), subtitle = number + window
+  count, `Current` tag on the focused row, primary action labelled **Switch to**.
 
 ### Known limitations
 - Renames are GlazeWM runtime state, not config. They reset on

@@ -12,6 +12,8 @@ namespace GlazeWMDock.Workspaces;
 /// </summary>
 internal sealed partial class WorkspacesListPage : ListPage
 {
+    private const int VirtualKeyF2 = 0x71;
+
     private readonly GlazeWmClient _client;
     private IReadOnlyList<WorkspaceInfo> _snapshot = [];
 
@@ -38,22 +40,22 @@ internal sealed partial class WorkspacesListPage : ListPage
         var items = new List<IListItem>(snapshot.Count);
         foreach (var ws in snapshot)
         {
+            var windows = ws.WindowCount == 1 ? "1 window" : $"{ws.WindowCount} windows";
+
             items.Add(new ListItem(new FocusWorkspaceCommand(_client, ws.Name))
             {
-                // DisplayName is always populated (the parser falls back to the
-                // workspace name), so key off it: a purely numeric label is just
-                // the workspace number -> "Workspace N"; a real custom name is
-                // shown as-is (and isn't echoed by the circled-digit icon anyway).
-                Title = int.TryParse(ws.DisplayName, out _)
-                    ? $"Workspace {ws.DisplayName}"
-                    : ws.DisplayName,
-                Subtitle = ws.HasFocus
-                    ? "focused"
-                    : ws.WindowCount == 1 ? "1 window" : $"{ws.WindowCount} windows",
-                // Keyed off Name, not DisplayName, so the icon stays a circled
-                // digit even once the title has been renamed to text.
+                // Number lives in the icon; title is the name when there is one.
+                Title = ws.IsRenamed ? ws.DisplayName : $"Workspace {ws.Name}",
+                Subtitle = ws.IsRenamed ? $"Workspace {ws.Name} · {windows}" : windows,
                 Icon = new IconInfo(WorkspaceGlyphs.For(ws.Name, ws.HasFocus, active: true)),
-                MoreCommands = [new CommandContextItem(new RenameWorkspacePage(_client, ws))],
+                Tags = ws.HasFocus ? [new Tag("Current")] : [],
+                MoreCommands =
+                [
+                    new CommandContextItem(new RenameWorkspacePage(_client, ws))
+                    {
+                        RequestedShortcut = KeyChordHelpers.FromModifiers(vkey: VirtualKeyF2),
+                    },
+                ],
             });
         }
 

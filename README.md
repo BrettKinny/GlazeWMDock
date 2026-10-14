@@ -144,10 +144,9 @@ Add-AppxPackage -Path <new .msix path> -ForceApplicationShutdown
 ## Renaming a workspace
 
 Open the **GlazeWM Workspaces** page, highlight a workspace, and pick **Rename**
-from its context menu (`Ctrl+K`). The new name appears on the Dock strip in place
-of that workspace's circled digit; workspaces you haven't renamed keep their
-digits, so a partly-renamed setup reads like `1 ❷ 3 Scratch 5`. Submitting an
-empty name puts the number back.
+from its context menu (`F2`, or `Ctrl+K`). The name appears on the Dock strip next
+to the workspace number, so a partly-renamed setup reads like `1 Teams ❷ 3 4 Jira`.
+**Remove name** on the same form puts it back to just the number.
 
 Two constraints, both from GlazeWM rather than this extension:
 

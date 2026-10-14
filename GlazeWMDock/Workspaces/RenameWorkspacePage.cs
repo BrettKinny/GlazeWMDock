@@ -21,45 +21,27 @@ namespace GlazeWMDock.Workspaces;
 /// </summary>
 internal sealed partial class RenameWorkspacePage : ContentPage
 {
-    private readonly RenameWorkspaceForm _form;
-
-    public RenameWorkspacePage(GlazeWmClient client, WorkspaceInfo workspace)
-    {
-        _form = new RenameWorkspaceForm(client, workspace);
-
-        Id = $"com.brettkinny.glazewmdock.rename.{workspace.Name}";
-        Name = "Rename";
-        Title = $"Rename workspace {workspace.Name}";
-        Icon = new IconInfo(char.ConvertFromUtf32(0xE8AC)); // Segoe Fluent "Rename"
-    }
-
-    public override IContent[] GetContent() => [_form];
-}
-
-/// <summary>
-/// Top-level "Rename current workspace" -- exists so it can take a CmdPal
-/// global hotkey. Resolves the focused workspace each time it opens.
-/// </summary>
-internal sealed partial class RenameFocusedWorkspacePage : ContentPage
-{
     private readonly GlazeWmClient _client;
-    private readonly Func<WorkspaceInfo?> _focused;
+    private readonly Func<WorkspaceInfo?> _resolve;
+    private readonly bool _dismissOnSave;
 
-    public RenameFocusedWorkspacePage(GlazeWmClient client, Func<WorkspaceInfo?> focused)
+    // resolve runs on every open: the page object outlives the snapshot it was
+    // built from. dismissOnSave: hotkey entry has no list to go back to.
+    public RenameWorkspacePage(GlazeWmClient client, string title, Func<WorkspaceInfo?> resolve, bool dismissOnSave = false)
     {
         _client = client;
-        _focused = focused;
+        _resolve = resolve;
+        _dismissOnSave = dismissOnSave;
 
-        Id = "com.brettkinny.glazewmdock.rename.focused";
         Name = "Rename";
-        Title = "Rename current workspace";
+        Title = title;
         Icon = new IconInfo(char.ConvertFromUtf32(0xE8AC)); // Segoe Fluent "Rename"
     }
 
     public override IContent[] GetContent() =>
-        _focused() is { } ws
-            ? [new RenameWorkspaceForm(_client, ws, dismissOnSave: true)]
-            : [new MarkdownContent("No focused workspace -- is GlazeWM running?")];
+        _resolve() is { } ws
+            ? [new RenameWorkspaceForm(_client, ws, _dismissOnSave)]
+            : [new MarkdownContent("Workspace not found -- is GlazeWM running?")];
 }
 
 /// <summary>
@@ -72,7 +54,6 @@ internal sealed partial class RenameWorkspaceForm : FormContent
     private readonly string _workspaceName;
     private readonly bool _dismissOnSave;
 
-    // dismissOnSave: hotkey entry has no list to go back to.
     public RenameWorkspaceForm(GlazeWmClient client, WorkspaceInfo workspace, bool dismissOnSave = false)
     {
         _client = client;
@@ -116,7 +97,7 @@ internal sealed partial class RenameWorkspaceForm : FormContent
                     "value": "{{Escape(current)}}",
                     "placeholder": "Teams",
                     "maxLength": 32,
-                    "regex": "^[^\s-]\S*$",
+                    "regex": "^[^\\s-]\\S*$",
                     "errorMessage": "No spaces, and can't start with -. Try my-work.",
                     "spacing": "Large"
                 },
@@ -143,7 +124,7 @@ internal sealed partial class RenameWorkspaceForm : FormContent
         string requested;
         try
         {
-            if (IsReset(data) || IsReset(inputs))
+            if (IsReset(data))
             {
                 return Apply(string.Empty);
             }

@@ -38,7 +38,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
     // be seeded with current state instead of the constructor placeholder.
     private volatile WorkspaceStripItem _strip;
     private volatile WrappedDockItem _dockBand;
-    private IReadOnlyList<MonitorInfo> _latest = [];
+    private volatile IReadOnlyList<MonitorInfo> _latest = [];
 
     public GlazeWMDockCommandsProvider()
     {
@@ -66,7 +66,7 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
                 Title = DisplayName,
                 Subtitle = "Switch GlazeWM workspace",
             },
-            new CommandItem(new RenameFocusedWorkspacePage(_client, FocusedWorkspace))
+            new CommandItem(new RenameWorkspacePage(_client, "Rename current workspace", FocusedWorkspace, dismissOnSave: true))
             {
                 Title = "Rename current workspace",
                 Subtitle = "GlazeWM",

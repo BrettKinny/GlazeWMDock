@@ -53,10 +53,15 @@ internal sealed partial class GlazeWmClient : IDisposable
         try
         {
             await SendAsync($"command {command}").ConfigureAwait(false);
+
+            // Don't rely on the event alone; e.g. a rename to an unchanged value
+            // may not emit one, leaving the UI stale.
+            await SendAsync(QueryMonitors).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
             // Best effort. If the socket is down, the reconnect loop recovers.
+            Log.Line($"command '{command}' not sent: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -150,6 +155,15 @@ internal sealed partial class GlazeWmClient : IDisposable
             {
                 // Something changed; ask for the authoritative monitor tree.
                 await SendAsync(QueryMonitors).ConfigureAwait(false);
+                return;
+            }
+
+            if (messageType == "client_response"
+                && root.TryGetProperty("success", out var success)
+                && success.ValueKind == JsonValueKind.False)
+            {
+                var error = root.TryGetProperty("error", out var err) ? err.ToString() : "?";
+                Log.Line($"GlazeWM rejected '{GetString(root, "clientMessage")}': {error}");
                 return;
             }
 
@@ -250,6 +264,7 @@ internal sealed partial class GlazeWmClient : IDisposable
         var socket = _socket;
         if (socket is null || socket.State != WebSocketState.Open)
         {
+            Log.Line($"IPC not connected; dropped '{message}'");
             return;
         }
 

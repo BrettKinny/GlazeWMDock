@@ -151,16 +151,15 @@ For a global shortcut, bind a hotkey to the top-level **Rename current workspace
 command in Command Palette Settings → Extensions → GlazeWM Workspaces.
 **Remove name** on the same form puts it back to just the number.
 
-Two constraints, both from GlazeWM rather than this extension:
+Names persist across GlazeWM restarts, config reloads and reboots. GlazeWM
+only keeps `update-workspace-config --display-name` in runtime state, so the
+extension saves names in its own settings and re-applies them whenever GlazeWM
+drops them. `config.yaml` is never touched. A saved name overrides any
+`display_name` set in `config.yaml` for that workspace; **Remove name** clears it.
 
-- **No spaces.** GlazeWM's IPC command parser splits on whitespace and doesn't
-  honour quoting, so `My Work` is rejected. Use `My-Work` or `My_Work`. The form
-  tells you this instead of silently mangling the name.
-- **Names don't survive a restart.** The rename is sent as
-  `update-workspace-config --display-name`, which changes GlazeWM's runtime state
-  only — it doesn't rewrite `config.yaml`. Names reset on `wm-reload-config` or a
-  GlazeWM restart. For permanent names, set `display_name` under the matching
-  entry in your `workspaces:` block; the strip picks those up too.
+**No spaces** — GlazeWM's IPC command parser splits on whitespace and doesn't
+honour quoting, so `My Work` is rejected. Use `My-Work` or `My_Work`. The form
+tells you this instead of silently mangling the name.
 
 Renaming needs GlazeWM 3.x or newer (the release that added
 `update-workspace-config`). On older builds the command is rejected and the name

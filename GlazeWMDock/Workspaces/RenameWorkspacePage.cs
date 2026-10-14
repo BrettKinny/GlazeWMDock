@@ -11,9 +11,8 @@ namespace GlazeWMDock.Workspaces;
 ///
 /// The rename is sent to GlazeWM as
 /// "command update-workspace-config --workspace &lt;name&gt; --display-name &lt;new&gt;"
-/// (available since GlazeWM 3.x). That only changes GlazeWM's *runtime* state --
-/// it does not rewrite config.yaml, so names revert on wm-reload-config or a WM
-/// restart. Put display_name in config.yaml if you want them to stick.
+/// (available since GlazeWM 3.x). That's runtime-only in GlazeWM, so the name is
+/// also saved in <see cref="SavedWorkspaceNames"/> and re-applied by the client.
 ///
 /// The rename raises a workspace_updated event, which GlazeWmClient already
 /// re-queries on, so the strip and the list refresh themselves; there's nothing
@@ -95,7 +94,6 @@ internal sealed partial class RenameWorkspaceForm : FormContent
                     "id": "displayName",
                     "label": "Name",
                     "value": "{{Escape(current)}}",
-                    "placeholder": "Teams",
                     "maxLength": 32,
                     "regex": "^[^\\s-]\\S*$",
                     "errorMessage": "No spaces, and can't start with -. Try my-work.",
@@ -103,7 +101,7 @@ internal sealed partial class RenameWorkspaceForm : FormContent
                 },
                 {
                     "type": "TextBlock",
-                    "text": "No spaces (GlazeWM limitation). Resets when GlazeWM restarts or reloads its config.",
+                    "text": "No spaces (GlazeWM limitation). Kept across GlazeWM restarts and reboots.",
                     "wrap": true,
                     "isSubtle": true,
                     "size": "Small",
@@ -162,6 +160,15 @@ internal sealed partial class RenameWorkspaceForm : FormContent
         if (target[0] == '-')
         {
             return CommandResult.ShowToast("A workspace name can't start with -");
+        }
+
+        if (requested.Length == 0)
+        {
+            SavedWorkspaceNames.Remove(_workspaceName);
+        }
+        else
+        {
+            SavedWorkspaceNames.Set(_workspaceName, target);
         }
 
         _ = _client.RunCommandAsync(

@@ -24,6 +24,8 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
 ### Changed
 - Dock strip shows a renamed workspace as number + name (`❶ Teams`, `4 Jira`);
   un-renamed workspaces unchanged.
+- Renames persist across GlazeWM restarts / config reloads / reboots: saved in
+  package LocalSettings, re-applied when GlazeWM drops them.
   Dot separators between workspaces once any is renamed.
 - Dock strip sets the `MaxLabelWidth` hint (`60ch`); newer CmdPal lifts the
   100px label cap, older builds ignore it.
@@ -31,9 +33,7 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
   count, `Current` tag on the focused row, primary action labelled **Switch to**.
 
 ### Known limitations
-- Renames are GlazeWM runtime state, not config. They reset on
-  `wm-reload-config` or a GlazeWM restart; use `display_name` in `config.yaml`
-  for permanent names.
+- Saved name overrides `display_name` from `config.yaml` for that workspace.
 - Names can't contain spaces. GlazeWM's IPC parser splits its command line on
   whitespace with no quoting, so the form rejects them rather than truncating.
 

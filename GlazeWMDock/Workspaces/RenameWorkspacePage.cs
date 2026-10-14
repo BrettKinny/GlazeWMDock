@@ -37,6 +37,32 @@ internal sealed partial class RenameWorkspacePage : ContentPage
 }
 
 /// <summary>
+/// Top-level "Rename current workspace" -- exists so it can take a CmdPal
+/// global hotkey. Resolves the focused workspace each time it opens.
+/// </summary>
+internal sealed partial class RenameFocusedWorkspacePage : ContentPage
+{
+    private readonly GlazeWmClient _client;
+    private readonly Func<WorkspaceInfo?> _focused;
+
+    public RenameFocusedWorkspacePage(GlazeWmClient client, Func<WorkspaceInfo?> focused)
+    {
+        _client = client;
+        _focused = focused;
+
+        Id = "com.brettkinny.glazewmdock.rename.focused";
+        Name = "Rename";
+        Title = "Rename current workspace";
+        Icon = new IconInfo(char.ConvertFromUtf32(0xE8AC)); // Segoe Fluent "Rename"
+    }
+
+    public override IContent[] GetContent() =>
+        _focused() is { } ws
+            ? [new RenameWorkspaceForm(_client, ws, dismissOnSave: true)]
+            : [new MarkdownContent("No focused workspace -- is GlazeWM running?")];
+}
+
+/// <summary>
 /// The adaptive-card form itself. Split out from the page so the page stays a
 /// thin shell; the interesting part is <see cref="SubmitForm(string, string)"/>.
 /// </summary>
@@ -44,11 +70,14 @@ internal sealed partial class RenameWorkspaceForm : FormContent
 {
     private readonly GlazeWmClient _client;
     private readonly string _workspaceName;
+    private readonly bool _dismissOnSave;
 
-    public RenameWorkspaceForm(GlazeWmClient client, WorkspaceInfo workspace)
+    // dismissOnSave: hotkey entry has no list to go back to.
+    public RenameWorkspaceForm(GlazeWmClient client, WorkspaceInfo workspace, bool dismissOnSave = false)
     {
         _client = client;
         _workspaceName = workspace.Name;
+        _dismissOnSave = dismissOnSave;
 
         var current = workspace.IsRenamed ? workspace.DisplayName : string.Empty;
 
@@ -158,7 +187,7 @@ internal sealed partial class RenameWorkspaceForm : FormContent
             $"update-workspace-config --workspace {_workspaceName} --display-name {target}");
 
         // GlazeWM's workspace_updated event refreshes the list behind us.
-        return CommandResult.GoBack();
+        return _dismissOnSave ? CommandResult.Dismiss() : CommandResult.GoBack();
     }
 
     private static bool IsReset(string json)

@@ -52,6 +52,9 @@ internal sealed partial class WorkspaceStripItem : ListItem
     // the other branch into an "unreachable code" warning.
     private static readonly bool ShowOnlyActive = true;
 
+    // Dock hint (newer CmdPal) lifting the 100px label cap; older hosts ignore it.
+    private const string DockMaxLabelWidth = "Microsoft.CommandPalette.Dock.MaxLabelWidth";
+
     private readonly string[] _names;
 
     public WorkspaceStripItem(ICommand switcher, string[] names)
@@ -61,6 +64,7 @@ internal sealed partial class WorkspaceStripItem : ListItem
         Title = string.Join(' ', names); // placeholder until the first snapshot
         Subtitle = "GlazeWM";
         Icon = new IconInfo(char.ConvertFromUtf32(0xE7F4)); // Segoe Fluent "Tiles"
+        GetProperties()[DockMaxLabelWidth] = "60ch";
     }
 
     /// <summary>
@@ -72,6 +76,9 @@ internal sealed partial class WorkspaceStripItem : ListItem
         var strip = new StringBuilder();
         var focusedDetail = string.Empty;
         var activeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Names make "1 Teams 2" ambiguous, so dot-separate once any exist.
+        var separator = monitors.Any(m => m.Workspaces.Any(ws => ws.IsRenamed)) ? " · " : " ";
 
         // Left-to-right by physical position so the strip mirrors the desktop
         // layout; Y then device name break ties for stacked / identical panels.
@@ -90,7 +97,7 @@ internal sealed partial class WorkspaceStripItem : ListItem
 
                 if (segment.Length > 0)
                 {
-                    segment.Append(' ');
+                    segment.Append(separator);
                 }
 
                 // Each monitor's currently displayed workspace gets the bold

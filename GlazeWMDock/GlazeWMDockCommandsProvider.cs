@@ -66,6 +66,11 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
                 Title = DisplayName,
                 Subtitle = "Switch GlazeWM workspace",
             },
+            new CommandItem(new RenameFocusedWorkspacePage(_client, FocusedWorkspace))
+            {
+                Title = "Rename current workspace",
+                Subtitle = "GlazeWM",
+            },
         ];
 
         _client.MonitorsChanged += OnMonitorsChanged;
@@ -76,6 +81,9 @@ public partial class GlazeWMDockCommandsProvider : CommandProvider
     public override ICommandItem[] TopLevelCommands() => _topLevel;
 
     public override ICommandItem[]? GetDockBands() => [_dockBand];
+
+    private WorkspaceInfo? FocusedWorkspace() =>
+        _latest.SelectMany(m => m.Workspaces).Where(ws => ws.HasFocus).Cast<WorkspaceInfo?>().FirstOrDefault();
 
     private void OnMonitorsChanged(IReadOnlyList<MonitorInfo> monitors)
     {

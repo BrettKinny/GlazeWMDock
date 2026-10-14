@@ -29,12 +29,16 @@ internal sealed partial class GlazeWmClient : IDisposable
     private const int DefaultPort = 6123;
     private const string QueryMonitors = "query monitors";
     private const string SubscribeWorkspaceEvents =
-        "sub --events focus_changed workspace_activated workspace_deactivated workspace_updated";
+        "sub --events focus_changed workspace_activated workspace_deactivated workspace_updated user_config_changed";
 
     private readonly Uri _uri;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly CancellationTokenSource _cts = new();
     private ClientWebSocket? _socket;
+
+    // "<workspace> <name>" renames already sent and not yet seen applied; stops a
+    // rejected rename re-sending on every snapshot. Receive-loop only.
+    private readonly HashSet<string> _pendingRenames = new(StringComparer.Ordinal);
 
     /// <summary>Raised whenever a fresh monitor/workspace snapshot arrives.</summary>
     public event Action<IReadOnlyList<MonitorInfo>>? MonitorsChanged;
@@ -53,10 +57,15 @@ internal sealed partial class GlazeWmClient : IDisposable
         try
         {
             await SendAsync($"command {command}").ConfigureAwait(false);
+
+            // Don't rely on the event alone; e.g. a rename to an unchanged value
+            // may not emit one, leaving the UI stale.
+            await SendAsync(QueryMonitors).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
             // Best effort. If the socket is down, the reconnect loop recovers.
+            Log.Line($"command '{command}' not sent: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -70,6 +79,7 @@ internal sealed partial class GlazeWmClient : IDisposable
                 _socket = socket;
                 await socket.ConnectAsync(_uri, token).ConfigureAwait(false);
                 Log.Line($"IPC connected to {_uri}");
+                _pendingRenames.Clear();
 
                 await SendAsync(SubscribeWorkspaceEvents).ConfigureAwait(false);
                 await SendAsync(QueryMonitors).ConfigureAwait(false);
@@ -154,6 +164,15 @@ internal sealed partial class GlazeWmClient : IDisposable
             }
 
             if (messageType == "client_response"
+                && root.TryGetProperty("success", out var success)
+                && success.ValueKind == JsonValueKind.False)
+            {
+                var error = root.TryGetProperty("error", out var err) ? err.ToString() : "?";
+                Log.Line($"GlazeWM rejected '{GetString(root, "clientMessage")}': {error}");
+                return;
+            }
+
+            if (messageType == "client_response"
                 && root.TryGetProperty("clientMessage", out var cm)
                 && cm.GetString() == QueryMonitors
                 && root.TryGetProperty("success", out var ok)
@@ -170,12 +189,44 @@ internal sealed partial class GlazeWmClient : IDisposable
                 }
 
                 MonitorsChanged?.Invoke(list);
+                await ReapplySavedNamesAsync(list).ConfigureAwait(false);
             }
         }
         catch
         {
             // Ignore malformed or unexpected frames.
         }
+    }
+
+    // GlazeWM drops runtime names on restart, config reload, and when an empty
+    // workspace is destroyed; push saved ones back whenever they've drifted.
+    private async Task ReapplySavedNamesAsync(List<MonitorInfo> monitors)
+    {
+        var saved = SavedWorkspaceNames.All();
+        var stillPending = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var mon in monitors)
+        {
+            foreach (var ws in mon.Workspaces)
+            {
+                if (!saved.TryGetValue(ws.Name, out var name) || ws.DisplayName == name)
+                {
+                    continue;
+                }
+
+                var key = $"{ws.Name} {name}";
+                stillPending.Add(key);
+                if (_pendingRenames.Add(key))
+                {
+                    Log.Line($"re-applying name '{name}' to workspace {ws.Name}");
+                    await RunCommandAsync($"update-workspace-config --workspace {ws.Name} --display-name {name}")
+                        .ConfigureAwait(false);
+                }
+            }
+        }
+
+        // Applied or workspace gone -> allow a retry next time it drifts.
+        _pendingRenames.IntersectWith(stillPending);
     }
 
     private static MonitorInfo ParseMonitor(JsonElement mon)
@@ -250,6 +301,7 @@ internal sealed partial class GlazeWmClient : IDisposable
         var socket = _socket;
         if (socket is null || socket.State != WebSocketState.Open)
         {
+            Log.Line($"IPC not connected; dropped '{message}'");
             return;
         }
 

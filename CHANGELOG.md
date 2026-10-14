@@ -12,6 +12,31 @@ which maps to package versions `1.0.0.0`, `1.0.1.0`, `1.0.2.0`.
 - Preparing the first public / Microsoft Store release: MIT license, public docs,
   community-health files, and package version restructured to `1.0.0.0`.
 
+## [1.0.2] - unreleased
+
+### Added
+- Rename workspaces on the fly. Every row of the GlazeWM Workspaces page now has
+  a **Rename** context command (`F2`) that opens a one-field form and sends
+  `update-workspace-config --display-name` over IPC. Requires GlazeWM 3.x.
+- Top-level **Rename current workspace** command, bindable to a CmdPal global
+  hotkey.
+
+### Changed
+- Dock strip shows a renamed workspace as number + name (`❶ Teams`, `4 Jira`);
+  un-renamed workspaces unchanged.
+- Renames persist across GlazeWM restarts / config reloads / reboots: saved in
+  package LocalSettings, re-applied when GlazeWM drops them.
+  Dot separators between workspaces once any is renamed.
+- Dock strip sets the `MaxLabelWidth` hint (`60ch`); newer CmdPal lifts the
+  100px label cap, older builds ignore it.
+- Workspaces page: title = name (or `Workspace N`), subtitle = number + window
+  count, `Current` tag on the focused row, primary action labelled **Switch to**.
+
+### Known limitations
+- Saved name overrides `display_name` from `config.yaml` for that workspace.
+- Names can't contain spaces. GlazeWM's IPC parser splits its command line on
+  whitespace with no quoting, so the form rejects them rather than truncating.
+
 ## [1.0.1] - certification fix (pending)
 
 ### Fixed

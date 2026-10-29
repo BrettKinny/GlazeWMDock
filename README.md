@@ -122,6 +122,11 @@ Get-Process GlazeWMDock -ErrorAction SilentlyContinue | Stop-Process -Force
 Add-AppxPackage -Path <new .msix path> -ForceApplicationShutdown
 ```
 
+Or, once the cert is trusted, let `scripts\deploy-dev.ps1` do the whole loop:
+it swaps the dev publisher into the (Store-identity) manifest, bumps the version
+past the installed dev package, builds + signs, restores the manifest, and
+installs (`-NoInstall` to stop after the build). Then run **Reload**.
+
 ---
 
 ## Enable the Dock and pin the band

@@ -5,8 +5,8 @@ namespace GlazeWMDock.Workspaces;
 
 /// <summary>
 /// When invoked, tells GlazeWM to focus a workspace by sending
-/// "command focus --workspace &lt;name&gt;" over IPC. KeepOpen() is returned so
-/// clicking a Dock button doesn't try to dismiss a (non-existent) palette.
+/// "command focus --workspace &lt;name&gt;" over IPC. Dismiss() so the next
+/// summon opens CmdPal home, not this list.
 /// </summary>
 internal sealed partial class FocusWorkspaceCommand : InvokableCommand
 {
@@ -20,12 +20,12 @@ internal sealed partial class FocusWorkspaceCommand : InvokableCommand
 
         // A non-empty, stable Id is required for items that live on the Dock.
         Id = $"com.brettkinny.glazewmdock.focus.{workspaceName}";
-        Name = $"Workspace {workspaceName}";
+        Name = "Switch to";
     }
 
     public override ICommandResult Invoke()
     {
         _ = _client.RunCommandAsync($"focus --workspace {_workspaceName}");
-        return CommandResult.KeepOpen();
+        return CommandResult.Dismiss();
     }
 }

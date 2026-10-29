@@ -141,6 +141,32 @@ Add-AppxPackage -Path <new .msix path> -ForceApplicationShutdown
 
 ---
 
+## Renaming a workspace
+
+Open the **GlazeWM Workspaces** page, highlight a workspace, and pick **Rename**
+from its context menu (`F2`, or `Ctrl+K`). The name appears on the Dock strip next
+to the workspace number, dot-separated: `1 Teams · ❷ · 3 · 4 Jira`.
+
+For a global shortcut, bind a hotkey to the top-level **Rename current workspace**
+command in Command Palette Settings → Extensions → GlazeWM Workspaces.
+**Remove name** on the same form puts it back to just the number.
+
+Names persist across GlazeWM restarts, config reloads and reboots. GlazeWM
+only keeps `update-workspace-config --display-name` in runtime state, so the
+extension saves names in its own settings and re-applies them whenever GlazeWM
+drops them. `config.yaml` is never touched. A saved name overrides any
+`display_name` set in `config.yaml` for that workspace; **Remove name** clears it.
+
+**No spaces** — GlazeWM's IPC command parser splits on whitespace and doesn't
+honour quoting, so `My Work` is rejected. Use `My-Work` or `My_Work`. The form
+tells you this instead of silently mangling the name.
+
+Renaming needs GlazeWM 3.x or newer (the release that added
+`update-workspace-config`). On older builds the command is rejected and the name
+stays as it was.
+
+---
+
 ## Configuration
 
 > Current limitation: there is no settings UI yet. Configuration lives in source

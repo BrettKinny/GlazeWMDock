@@ -1,3 +1,5 @@
+using System;
+
 namespace GlazeWMDock.Workspaces;
 
 /// <summary>
@@ -10,4 +12,13 @@ internal readonly record struct WorkspaceInfo(
     string DisplayName,
     bool HasFocus,
     bool IsDisplayed,
-    int WindowCount);
+    int WindowCount)
+{
+    // Parser falls back DisplayName -> Name, and clearing a rename sets it back
+    // to Name, so "differs from Name" is the only reliable test.
+    public bool IsRenamed =>
+        !string.IsNullOrEmpty(DisplayName) && !string.Equals(DisplayName, Name, StringComparison.Ordinal);
+
+    /// <summary>"1 · Teams" when renamed, else "1".</summary>
+    public string Label => IsRenamed ? $"{Name} · {DisplayName}" : Name;
+}
